@@ -11,11 +11,15 @@ mitgepflegt:
 2. **`#🛠・updates`** einen Update-Post schreiben, Format:
 
    ```
+   @everyone
    new update
 
    - ...
    - ...
    ```
+
+   **Jeder Post in `#updates` und `#announcement` beginnt mit `@everyone`**
+   (pingt den ganzen Server).
 
    **Keine Versionsnummer im Post** - nur was neu ist und was verbessert wurde.
    Kurz, Englisch, nur echte Aenderungen.
@@ -42,7 +46,7 @@ Alles auf Englisch, Kanaele sind read-only (Post per Bot).
 ## Zusaetzlich
 
 - **News vom Nutzer** (Ankuendigungen, free/paid, Events) -> sofort nach
-  `#❗・announcement` posten, Englisch, kurz.
+  `#❗・announcement` posten, Englisch, kurz, mit `@everyone` davor.
 - **Jedes Script-Update** bekommt **immer** einen neuen Post in `#🛠・updates`.
 
 Nicht fragen, ob gepostet werden soll - einfach machen und danach kurz melden.

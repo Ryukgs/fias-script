@@ -12,6 +12,7 @@ Wenn das Script geupdated wird, wird Discord **immer** mitgepflegt:
 - `#🛠・updates` -> Post im Format:
 
   ```
+  @everyone
   new update
 
   - ...
@@ -21,6 +22,7 @@ Wenn das Script geupdated wird, wird Discord **immer** mitgepflegt:
   ohne Versionsnummer - nur was neu/verbessert ist
 
 - `#❗・announcement` -> nur allgemeine Neuigkeiten, keine Script-Updates
+  (immer mit `@everyone` davor)
 - `#ℹ️・info` -> Executor-Support, Anti-Cheat-Bypass (Adonis) aktualisieren
   (keine Versionsnummer)
 
