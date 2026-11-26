@@ -1,0 +1,4 @@
+# quelltext bleibt lokal, im repo liegt nur der gepackte loader
+src/
+tools/__pycache__/
+*.pyc
