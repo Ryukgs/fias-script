@@ -4,6 +4,22 @@ Eine Datei, keine dependencies, keine Nachrichten in den Kanaelen.
 Der Aufbau ist 1:1 der Referenz-Server: gleiche Kategorien, gleiche
 Kanal-Namen mit Emoji, gleiche Kanal-Typen.
 
+## Update-Ritual (immer)
+
+Wenn das Script geupdated wird, wird Discord **immer** mitgepflegt:
+
+- `#👀・features` -> Liste der Funktionen aktualisieren, falls sich was geaendert hat
+- `#❗・announcement` -> Post im Format:
+
+  ```
+  new update
+
+  - ...
+  - ...
+  ```
+
+Beides auf Englisch, ohne Nachfrage.
+
 ## 1. Server anlegen
 
 Discord -> **+** -> **Server erstellen** -> Name (z. B. `ryuk hub`).
