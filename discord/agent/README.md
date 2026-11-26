@@ -9,24 +9,30 @@ und (nach Rückfrage) löschen.
 1. **Bot-Token** — Developer Portal, deine App, Bot -> Reset Token.
 2. **Deine User-ID** — Discord -> Entwicklermodus an -> Rechtsklick auf dich -> ID kopieren.
 3. **Server-ID** — Rechtsklick auf den Server -> ID kopieren.
-4. **API-Key** — gratis bei z.ai (siehe unten), kein Guthaben noetig.
+4. **API-Key** — gratis ueber dein Google-Konto (siehe unten).
 
-## Gratis-Key statt Credits
+## Gratis-Key (Google Gemini)
 
-1. Auf **z.ai** registrieren.
-2. Dort einen **API Key** erstellen und kopieren.
+1. https://aistudio.google.com/apikey oeffnen und mit dem Google-Konto einloggen.
+2. **Create API key** klicken und den Key kopieren.
 3. In der `.env` so eintragen:
 
 ```
-OPENAI_API_KEY=dein_zai_key
-OPENAI_BASE_URL=https://api.z.ai/api/paas/v4
-OPENAI_MODEL=glm-4-flash
+OPENAI_API_KEY=dein_gemini_key
+OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+OPENAI_MODEL=gemini-3.8-flash
 ```
 
-`glm-4-flash` ist das kostenlose Modell. Reicht fuer Kanal- und Rollen-Bau.
-Wenn du spaeter ein staerkeres Modell willst, nur `OPENAI_MODEL` aendern.
+Geht das Modell nicht: `OPENAI_MODEL=gemini-3.5-flash-lite`.
 
-**Alternative mit Credits:** https://freebuff.com/account/api
+**Andere gratis-Anbieter mit demselben Format:**
+
+| Anbieter | Base URL | Modell | Key |
+| --- | --- | --- | --- |
+| Groq | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` | console.groq.com/keys |
+| OpenRouter | `https://openrouter.ai/api/v1` | `meta-llama/llama-3.3-70b-instruct:free` | openrouter.ai/keys |
+
+**Mit Credits:** https://freebuff.com/account/api
 (`OPENAI_BASE_URL=https://freebuff.com/api/v1/paid`, `OPENAI_MODEL=gpt-4o-mini`).
 
 ## 1. Message Content Intent an
@@ -87,6 +93,6 @@ Der Bot antwortet mit einer kurzen Liste, was er angelegt hat.
 | --- | --- |
 | `missing env: ...` | `.env` unvollständig oder `--env-file` vergessen |
 | `api 401` | API-Key falsch |
-| `api 404` | `OPENAI_MODEL` oder `OPENAI_BASE_URL` falsch (z.ai: `.../paas/v4` + `glm-4-flash`) |
+| `api 404` | `OPENAI_MODEL` oder `OPENAI_BASE_URL` falsch (Gemini: `.../v1beta/openai/` + `gemini-3.8-flash`) |
 | Bot antwortet nicht | Message Content Intent aus, oder falscher Kanal |
 | `Missing Permissions` | Bot braucht Administrator |
