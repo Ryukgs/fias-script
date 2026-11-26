@@ -6,4 +6,6 @@ tools/
 
 # discord setup
 node_modules/
+.env
 discord/.env
+discord/agent/.env
