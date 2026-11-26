@@ -20,11 +20,27 @@
  *   discord_send_message
  */
 import readline from 'node:readline';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 const API = 'https://discord.com/api/v10';
-const TOKEN = process.env.DISCORD_TOKEN ?? '';
 const DEFAULT_GUILD = process.env.DISCORD_GUILD_ID ?? '';
 const PROTOCOL = '2024-11-05';
+
+// Token: erst discord-token.txt neben dieser Datei, sonst DISCORD_TOKEN.
+// Die Datei wird bei jedem Aufruf neu gelesen, ein Token-Wechsel braucht
+// also keinen Neustart des MCP mehr.
+const TOKEN_FILE = process.env.DISCORD_TOKEN_FILE || join(dirname(fileURLToPath(import.meta.url)), 'discord-token.txt');
+function token() {
+  try {
+    const fromFile = readFileSync(TOKEN_FILE, 'utf8').trim();
+    if (fromFile) return fromFile;
+  } catch {
+    // keine Datei -> env
+  }
+  return (process.env.DISCORD_TOKEN ?? '').trim();
+}
 
 const send = (msg) => process.stdout.write(`${JSON.stringify(msg)}\n`);
 const log = (...args) => console.error('[discord-mcp]', ...args);
@@ -32,7 +48,8 @@ const log = (...args) => console.error('[discord-mcp]', ...args);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function api(path, { method = 'GET', body } = {}) {
-  if (!TOKEN) throw new Error('DISCORD_TOKEN fehlt in der MCP-Konfiguration');
+  const TOKEN = token();
+  if (!TOKEN) throw new Error(`Token fehlt: ${TOKEN_FILE} anlegen oder DISCORD_TOKEN setzen`);
   for (let attempt = 0; attempt < 4; attempt++) {
     const res = await fetch(API + path, {
       method,
@@ -112,6 +129,7 @@ const TOOLS = [
         read_only: { type: 'boolean' },
         private: { type: 'boolean' },
         verified_only: { type: 'boolean', description: 'Nur Verified (und Staff) sehen den Kanal' },
+        role: { type: 'string', description: 'Mit verified_only: diese Rolle statt Verified (Name oder ID)' },
         slowmode: { type: 'number' },
         guild_id: { type: 'string' },
       },
@@ -353,7 +371,7 @@ async function findRole(guildId, ref) {
 async function staffRoleIds(guildId) {
   const roles = await api(`/guilds/${guildId}/roles`);
   return roles
-    .filter((r) => ['Owner', 'Admin', 'Moderator', 'Helper'].includes(r.name))
+    .filter((r) => ['Owner', 'Admin', 'Moderator', 'Helper', 'Staff'].includes(r.name))
     .map((r) => r.id);
 }
 
@@ -390,7 +408,10 @@ async function callTool(name, args = {}) {
       const everyone = guildId; // @everyone traegt die server-id als rollen-id
       const staff = await staffRoleIds(guildId);
       const roles = await api(`/guilds/${guildId}/roles`);
-      const verified = roles.find((r) => r.name === 'Verified');
+      const wantedRole = args.role ? String(args.role).replace(/^@/, '').toLowerCase() : '';
+      const verified = wantedRole
+        ? roles.find((r) => r.name.toLowerCase() === wantedRole) ?? null
+        : roles.find((r) => r.name === 'Verified');
 
       if (args.private) {
         overwrites.push({ id: everyone, type: 0, deny: bits(F.ViewChannel) });
