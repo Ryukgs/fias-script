@@ -24,7 +24,9 @@ if not exist .env (
   exit /b 1
 )
 
+:run
 node --env-file=.env verify.mjs
 echo.
-echo Bot beendet.
-pause
+echo Bot beendet oder abgestuerzt - restart in 5s. Fenster schliessen = stop.
+timeout /t 5 >nul
+goto run

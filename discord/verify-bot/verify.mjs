@@ -184,34 +184,30 @@ client.on(Events.GuildMemberAdd, async (member) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton() || interaction.customId !== 'verify_accept') return;
 
-  const guild = interaction.guild;
-  if (!guild) return;
-
-  const role = findRole(guild, VERIFY_ROLE);
-  if (!role) {
-    await interaction.reply({ content: 'Verified role is missing. Tell an admin.', flags: MessageFlags.Ephemeral });
-    return;
-  }
-
-  const member = interaction.member;
-  if (member.roles.cache.has(role.id)) {
-    await interaction.reply({ content: 'You are already verified.', flags: MessageFlags.Ephemeral });
-    return;
-  }
-
-  const ageMs = Date.now() - interaction.user.createdTimestamp;
-  if (ageMs < MIN_AGE_MS) {
-    const days = Math.ceil((MIN_AGE_MS - ageMs) / (24 * 60 * 60 * 1000));
-    await interaction.reply({
-      content: `Your account is too new. Try again in **${days} day${days === 1 ? '' : 's'}**.`,
-      flags: MessageFlags.Ephemeral,
-    });
-    return;
-  }
-
   try {
+    const guild = interaction.guild;
+    if (!guild || !interaction.member) return;
+
+    // discord gibt nur 3 sekunden - sofort bestaetigen, dann antworten
+    if (!interaction.deferred && !interaction.replied) {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    }
+    const say = (text) => interaction.editReply({ content: text });
+
+    const role = findRole(guild, VERIFY_ROLE);
+    if (!role) return say('Verified role is missing. Tell an admin.');
+
+    const member = interaction.member;
+    if (member.roles.cache.has(role.id)) return say('You are already verified.');
+
+    const ageMs = Date.now() - interaction.user.createdTimestamp;
+    if (ageMs < MIN_AGE_MS) {
+      const days = Math.ceil((MIN_AGE_MS - ageMs) / (24 * 60 * 60 * 1000));
+      return say(`Your account is too new. Try again in **${days} day${days === 1 ? '' : 's'}**.`);
+    }
+
     await member.roles.add(role, 'verification');
-    await interaction.reply({ content: 'Verified. Welcome to the server.', flags: MessageFlags.Ephemeral });
+    await say('Verified. Welcome to the server.');
 
     const log = findChannel(guild, LOG_CHANNEL);
     if (log?.isTextBased()) {
@@ -219,12 +215,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await log.send(`✅ <@${interaction.user.id}> verified (account age ${days} days)`).catch(() => {});
     }
   } catch (err) {
-    console.error(err);
-    await interaction.reply({
-      content: 'Could not assign the role. Check that the bot role is above Verified.',
-      flags: MessageFlags.Ephemeral,
-    });
+    console.error(`verify fehlgeschlagen: ${err?.message || err}`);
+    try {
+      const text = 'Could not verify. Check that the bot role is above Verified, then try again.';
+      if (interaction.deferred || interaction.replied) await interaction.editReply({ content: text });
+      else await interaction.reply({ content: text, flags: MessageFlags.Ephemeral });
+    } catch {}
   }
 });
 
-client.login(TOKEN);
+process.on('unhandledRejection', (err) => console.error(`unhandledRejection: ${err?.message || err}`));
+process.on('uncaughtException', (err) => console.error(`uncaughtException: ${err?.message || err}`));
