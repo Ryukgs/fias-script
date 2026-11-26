@@ -379,7 +379,7 @@ const TOOLS = [
   },
   {
     name: 'discord_edit_channel',
-    description: 'Aendert Topic, Slowmode, NSFW-Flag oder Namen eines Kanals.',
+    description: 'Aendert Topic, Slowmode, NSFW-Flag, Namen oder User-Limit eines Kanals.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -388,6 +388,7 @@ const TOOLS = [
         topic: { type: 'string' },
         slowmode: { type: 'number' },
         nsfw: { type: 'boolean' },
+        user_limit: { type: 'number', description: 'Sprachkanal: max. Teilnehmer (0 = unbegrenzt)' },
         guild_id: { type: 'string' },
       },
       required: ['channel'],
@@ -682,6 +683,7 @@ async function callTool(name, args = {}) {
       if (args.topic !== undefined) body.topic = args.topic;
       if (args.slowmode !== undefined) body.rate_limit_per_user = args.slowmode;
       if (args.nsfw !== undefined) body.nsfw = args.nsfw;
+      if (args.user_limit !== undefined) body.user_limit = args.user_limit;
       const updated = await api(`/channels/${ch.id}`, { method: 'PATCH', body });
       return `Kanal geaendert: #${updated.name} (${updated.id})`;
     }
