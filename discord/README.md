@@ -23,6 +23,9 @@ Wenn das Script geupdated wird, wird Discord **immer** mitgepflegt:
 - `#ℹ️・info` -> Version, erlaubter Executor (nur Madium), Anti-Cheat-Bypass (Adonis)
   aktualisieren, wenn sich was aendert
 
+News vom Nutzer -> sofort `#❗・announcement`.
+Jedes Script-Update -> **immer** neuer Post in `#🛠・updates`.
+
 Alles auf Englisch, ohne Nachfrage.
 
 ## 1. Server anlegen

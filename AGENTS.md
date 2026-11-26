@@ -27,4 +27,11 @@ mitgepflegt:
 
 Alles auf Englisch, Kanaele sind read-only (Post per Bot).
 
+Zusaetzlich:
+
+- **News vom Nutzer** (Ankuendigungen, free/paid, Events) -> sofort nach
+  `#❗・announcement` posten, Englisch, kurz.
+- **Jedes Script-Update** bekommt **immer** einen neuen Post in
+  `#🛠・updates` (Version + was sich geaendert hat).
+
 Nicht fragen, ob gepostet werden soll - einfach machen und danach kurz melden.
