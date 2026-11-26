@@ -94,7 +94,7 @@ async function findChannel(guildId, ref) {
   );
 }
 
-const TYPE = { text: 0, voice: 2, announcement: 5 };
+const TYPE = { text: 0, voice: 2, announcement: 5, forum: 15 };
 
 const TOOLS = [
   {
@@ -118,12 +118,12 @@ const TOOLS = [
   },
   {
     name: 'discord_create_channel',
-    description: 'Legt einen Kanal an (text, voice oder announcement).',
+    description: 'Legt einen Kanal an (text, voice, announcement oder forum - forum = Beitraege mit Upvotes).',
     inputSchema: {
       type: 'object',
       properties: {
         name: { type: 'string' },
-        type: { type: 'string', enum: ['text', 'voice', 'announcement'] },
+        type: { type: 'string', enum: ['text', 'voice', 'announcement', 'forum'] },
         category: { type: 'string', description: 'Kategorie-Name oder ID, optional' },
         topic: { type: 'string' },
         read_only: { type: 'boolean' },
@@ -438,7 +438,12 @@ async function callTool(name, args = {}) {
       const lines = all
         .sort((a, b) => a.position - b.position)
         .map((c) => {
-          const type = c.type === 4 ? 'category' : c.type === 2 ? 'voice' : c.type === 5 ? 'announcement' : 'text';
+          const type =
+            c.type === 4 ? 'category'
+              : c.type === 2 ? 'voice'
+                : c.type === 5 ? 'announcement'
+                  : c.type === 15 ? 'forum'
+                    : 'text';
           const parent = all.find((p) => p.id === c.parent_id);
           return `${type.padEnd(12)} ${c.name}  (${c.id})${parent ? `  in ${parent.name}` : ''}`;
         });
@@ -490,8 +495,9 @@ async function callTool(name, args = {}) {
         name: args.name,
         type,
         parent_id: parentId,
-        topic: type === 0 ? args.topic : undefined,
+        topic: type === 0 || type === 15 ? args.topic : undefined,
         rate_limit_per_user: type === 0 ? (args.slowmode ?? 0) : undefined,
+        default_thread_rate_limit_per_user: type === 15 ? (args.slowmode ?? 0) : undefined,
         permission_overwrites: overwrites,
       };
 
