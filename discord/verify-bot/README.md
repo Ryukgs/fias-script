@@ -1,7 +1,13 @@
-# ryuk verify bot
+# ryuk bot
 
-Ein Button in `#verify`. Klick = Account-Alter pruefen, Rolle `Verified`
-geben, Eintrag in `#logs`. Kein Fremd-Bot, keine KI, keine Kosten.
+Zwei Aufgaben:
+
+1. **Verify** — Button in `#verify`, Account-Alter pruefen, Rolle `Verified`
+   geben, Eintrag in `#logs`.
+2. **Welcome** — bei jedem Join eine Karte in `#welcome` mit Avatar und
+   Anzeigename.
+
+Kein Fremd-Bot, keine KI, keine Kosten.
 
 ## Was er braucht
 
@@ -33,6 +39,13 @@ DISCORD_GUILD_ID=1575576191920898171
 Dann `start.cmd` doppelklicken. Beim ersten Start postet der Bot das Panel
 in `#verify`.
 
+## Wichtig: Server Members Intent
+
+Fuer die Join-Karten braucht der Bot den privilegierten Intent:
+Developer Portal -> deine App -> **Bot** -> Privileged Gateway Intents ->
+**SERVER MEMBERS INTENT** einschalten -> **Save Changes**.
+Ohne den Intent startet der Bot nicht (Discord wirft `Used disallowed intents`).
+
 ## Wichtig: Rollen-Reihenfolge
 
 Der Bot kann nur Rollen vergeben, die **unter** seiner eigenen Rolle stehen.
@@ -53,6 +66,7 @@ ueber `Verified`. Sonst kommt "Could not assign the role".
 | `VERIFY_CHANNEL` | `verify` | Kanal fuer das Panel |
 | `VERIFY_ROLE` | `Verified` | Rolle, die vergeben wird |
 | `LOG_CHANNEL` | `logs` | Kanal fuer Logs |
+| `WELCOME_CHANNEL` | `welcome` | Kanal fuer die Join-Karten |
 
 ## Wenn etwas nicht geht
 

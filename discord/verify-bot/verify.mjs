@@ -26,6 +26,7 @@ const {
   VERIFY_CHANNEL = 'verify',
   VERIFY_ROLE = 'Verified',
   LOG_CHANNEL = 'logs',
+  WELCOME_CHANNEL = 'welcome',
   MIN_ACCOUNT_AGE_DAYS = '7',
 } = process.env;
 
@@ -38,8 +39,12 @@ const MIN_AGE_MS = Number(MIN_ACCOUNT_AGE_DAYS) * 24 * 60 * 60 * 1000;
 const here = dirname(fileURLToPath(import.meta.url));
 const statePath = join(here, 'verify-panel.json');
 
-// Guilds reicht: die Rollen des Klickenden kommen mit der Interaction.
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+// Guilds fuer die Kanaldaten, GuildMembers fuer join-Events.
+// GuildMembers ist ein privilegierter Intent: im Developer Portal unter
+// Bot -> Privileged Gateway Intents -> SERVER MEMBERS INTENT einschalten.
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+});
 
 function findChannel(guild, ref) {
   const clean = String(ref).trim().replace(/^#/, '').toLowerCase();
@@ -119,6 +124,25 @@ client.once(Events.ClientReady, async (c) => {
     console.log('bereit');
   } catch (err) {
     console.error(`setup fehlgeschlagen: ${err.message}`);
+  }
+});
+
+// Join-Karte: Avatar + Anzeigename, sonst nichts.
+client.on(Events.GuildMemberAdd, async (member) => {
+  try {
+    const channel = findChannel(member.guild, WELCOME_CHANNEL);
+    if (!channel?.isTextBased()) return;
+    await channel.send({
+      embeds: [
+        {
+          color: 0xffffff,
+          description: `Welcome to **ryuk hub**, **${member.displayName}**`,
+          thumbnail: { url: member.user.displayAvatarURL({ size: 256 }) },
+        },
+      ],
+    });
+  } catch (err) {
+    console.error(`welcome fehlgeschlagen: ${err.message}`);
   }
 });
 
