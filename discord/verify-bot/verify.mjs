@@ -165,7 +165,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
   try {
     const channel = findChannel(member.guild, WELCOME_CHANNEL);
     if (!channel?.isTextBased()) return;
-    await channel.send({
+    const message = await channel.send({
       embeds: [
         {
           color: 0xffffff,
@@ -174,6 +174,18 @@ client.on(Events.GuildMemberAdd, async (member) => {
         },
       ],
     });
+
+    try {
+      await message.pin('welcome');
+    } catch (err) {
+      // 30003 = 50 Pins voll. Dann die aelteste eigene Karte loesen und neu pinnen.
+      if (err.code === 30003) {
+        const pinned = await channel.messages.fetchPinned();
+        const oldest = pinned.filter((m) => m.author.id === client.user.id).last();
+        if (oldest) await oldest.unpin().catch(() => {});
+        await message.pin('welcome').catch(() => {});
+      }
+    }
   } catch (err) {
     console.error(`welcome fehlgeschlagen: ${err.message}`);
   }
