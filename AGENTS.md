@@ -11,15 +11,17 @@ mitgepflegt:
 2. **`#🛠・updates`** einen Update-Post schreiben, Format:
 
    ```
-   @everyone
    new update
 
    - ...
    - ...
    ```
 
-   **Jeder Post in `#updates` und `#announcement` beginnt mit `@everyone`**
-   (pingt den ganzen Server).
+   **Ping-Regel:**
+   - `#announcement`: **immer** `@everyone` (echte Neuigkeiten fuer alle)
+   - `#updates`: `@everyone` **nur bei grossen/wichtigen Sachen** (neues
+     Feature, Key-System, Executor-Support, Anti-Cheat, grosse Fixes)
+   - kleine Fixes, Feintuning, Kleinigkeiten: **kein Ping**, nur der Post
 
    **Keine Versionsnummer im Post** - nur was neu ist und was verbessert wurde.
    Kurz, Englisch, nur echte Aenderungen.
