@@ -332,6 +332,21 @@ const TOOLS = [
     },
   },
   {
+    name: 'discord_forum_tags',
+    description:
+      'Setzt Tags an einen Forum-Kanal (z. B. feature / bug / change). Bestehende Tags bleiben.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        channel: { type: 'string' },
+        tags: { type: 'array', items: { type: 'string' } },
+        guild_id: { type: 'string' },
+      },
+      required: ['channel', 'tags'],
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'discord_reorder_channels',
     description:
       'Setzt die Reihenfolge der Kanaele in einem Rutsch (von oben nach unten). order ist eine Liste von Kanalnamen oder IDs.',
@@ -576,6 +591,45 @@ async function callTool(name, args = {}) {
       if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
       await api(`/channels/${ch.id}/messages/${args.message_id}`, { method: 'DELETE' });
       return `Nachricht geloescht (${args.message_id})`;
+    }
+
+    case 'discord_forum_tags': {
+      const ch = await findChannel(guildId, args.channel);
+      if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
+      if (ch.type !== 15) throw new Error(`Kein Forum-Kanal: ${ch.name}`);
+      const names = (args.tags ?? []).map((t) => String(t).trim()).filter(Boolean);
+      if (!names.length) throw new Error('Keine Tags angegeben');
+
+      // neuer weg: eigener tags-endpunkt
+      let viaEndpoint = true;
+      for (const name of names) {
+        try {
+          await api(`/channels/${ch.id}/tags`, {
+            method: 'POST',
+            body: { name, moderated: false },
+          });
+        } catch (err) {
+          viaEndpoint = false;
+          break;
+        }
+      }
+      if (viaEndpoint) return `Tags gesetzt: ${names.join(', ')}`;
+
+      // fallback: available_tags am kanal
+      const existing = ch.available_tags ?? [];
+      const have = new Set(existing.map((t) => String(t.name).toLowerCase()));
+      const fresh = names
+        .filter((n) => !have.has(n.toLowerCase()))
+        .map((n) => ({
+          id: (BigInt(Date.now()) * 1000n + BigInt(Math.floor(Math.random() * 1000))).toString(),
+          name: n,
+          moderated: false,
+        }));
+      await api(`/channels/${ch.id}`, {
+        method: 'PATCH',
+        body: { available_tags: [...existing, ...fresh] },
+      });
+      return `Tags gesetzt (fallback): ${[...existing.map((t) => t.name), ...fresh.map((t) => t.name)].join(', ')}`;
     }
 
     case 'discord_reorder_channels': {
