@@ -2305,4 +2305,5 @@ for i, b in ipairs(bytes) do
     out[i] = string.char(bit32.bxor(b, kb))
 end
 
-loadstring(table.concat(out))()
+local ls = loadstring or load
+ls(table.concat(out))()
