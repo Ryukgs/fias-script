@@ -174,6 +174,35 @@ const TOOLS = [
     },
   },
   {
+    name: 'discord_edit_message',
+    description: 'Aendert den Text einer bestehenden Nachricht.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        channel: { type: 'string' },
+        message_id: { type: 'string' },
+        text: { type: 'string' },
+        guild_id: { type: 'string' },
+      },
+      required: ['channel', 'message_id', 'text'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'discord_delete_message',
+    description: 'Loescht eine Nachricht.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        channel: { type: 'string' },
+        message_id: { type: 'string' },
+        guild_id: { type: 'string' },
+      },
+      required: ['channel', 'message_id'],
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'discord_list_roles',
     description: 'Alle Rollen eines Servers mit Rechten und Position.',
     inputSchema: {
@@ -431,6 +460,23 @@ async function callTool(name, args = {}) {
       if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
       const msg = await api(`/channels/${ch.id}/messages`, { method: 'POST', body: { content: args.text } });
       return `Nachricht gesendet in #${ch.name} (${msg.id})`;
+    }
+
+    case 'discord_edit_message': {
+      const ch = await findChannel(guildId, args.channel);
+      if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
+      const msg = await api(`/channels/${ch.id}/messages/${args.message_id}`, {
+        method: 'PATCH',
+        body: { content: args.text },
+      });
+      return `Nachricht bearbeitet (${msg.id})`;
+    }
+
+    case 'discord_delete_message': {
+      const ch = await findChannel(guildId, args.channel);
+      if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
+      await api(`/channels/${ch.id}/messages/${args.message_id}`, { method: 'DELETE' });
+      return `Nachricht geloescht (${args.message_id})`;
     }
 
     case 'discord_list_roles': {
