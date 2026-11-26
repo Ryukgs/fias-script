@@ -26,6 +26,7 @@ const {
   OPENAI_API_KEY,
   OPENAI_BASE_URL = 'https://freebuff.com/api/v1/paid',
   OPENAI_MODEL = 'gpt-4o-mini',
+  OPENAI_FALLBACK_MODELS = '',
   AGENT_CHANNEL = 'bot-chat',
 } = process.env;
 
@@ -302,14 +303,27 @@ function systemPrompt(guild) {
   ].join('\n');
 }
 
-async function callModel(messages, tools) {
+// Modell-Liste: erst das konfigurierte, dann die fallbacks. Wenn ein Modell
+// ueberlastet ist (503) oder das Limit erreicht (429), nimmt der Bot das
+// naechste, statt einfach zu sterben.
+const DEFAULT_FALLBACKS = OPENAI_BASE_URL.includes('generativelanguage')
+  ? 'gemini-3.5-flash-lite,gemini-2.5-flash'
+  : '';
+const FALLBACKS = (OPENAI_FALLBACK_MODELS || DEFAULT_FALLBACKS)
+  .split(',').map((s) => s.trim()).filter(Boolean);
+const MODELS = [...new Set([
+  OPENAI_MODEL,
+  ...FALLBACKS,
+])];
+
+async function callModelOnce(model, messages, tools) {
   const res = await fetch(`${OPENAI_BASE_URL.replace(/\/+$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
-    body: JSON.stringify({ model: OPENAI_MODEL, messages, tools, tool_choice: 'auto', temperature: 0.3 }),
+    body: JSON.stringify({ model, messages, tools, tool_choice: 'auto', temperature: 0.3 }),
   });
 
   const text = await res.text();
@@ -318,11 +332,36 @@ async function callModel(messages, tools) {
 
   if (!res.ok) {
     const hint = res.status === 401 ? ' (API key invalid)' : res.status === 404 ? ' (model or base url wrong)' : '';
-    throw new Error(`api ${res.status}${hint}: ${(data && data.error && data.error.message) || text.slice(0, 200)}`);
+    const err = new Error(`api ${res.status}${hint}: ${(data && data.error && data.error.message) || text.slice(0, 200)}`);
+    err.status = res.status;
+    throw err;
   }
   const message = data?.choices?.[0]?.message;
   if (!message) throw new Error('api returned no message');
   return message;
+}
+
+const RETRY_STATUS = new Set([429, 500, 502, 503, 504]);
+
+async function callModel(messages, tools) {
+  let lastError;
+
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await callModelOnce(model, messages, tools);
+      } catch (err) {
+        lastError = err;
+        if (!RETRY_STATUS.has(err.status)) throw err;
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
+      }
+    }
+    if (model !== MODELS[MODELS.length - 1]) {
+      console.log(`model ${model} busy, trying next`);
+    }
+  }
+
+  throw lastError;
 }
 
 // ---------------------------------------------------------------------------

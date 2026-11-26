@@ -100,6 +100,7 @@ AGENT_CHANNEL=$channel
 OPENAI_API_KEY=$apiKey
 OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
 OPENAI_MODEL=gemini-3.8-flash
+OPENAI_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-2.5-flash
 "@
 # ohne BOM schreiben, sonst liest node den ersten schluessel falsch
 [IO.File]::WriteAllText((Join-Path $root ".env"), $envContent, (New-Object System.Text.UTF8Encoding($false)))
