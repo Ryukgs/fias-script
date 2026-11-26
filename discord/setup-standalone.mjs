@@ -2,16 +2,17 @@
 /**
  * ryuk hub - discord setup (standalone, keine dependencies)
  *
- * Braucht nur Node 18+. Kein npm install.
+ * 1:1 der referenz-aufbau: gleiche kategorien, gleiche kanal-namen mit emoji,
+ * gleiche kanal-typen (ankuendigung = megafon, text = hashtag, privat = schloss).
+ *
+ * Braucht nur Node 18+.
  *
  *   1. Bot im Server (Administrator)
- *   2. DISCORD_TOKEN=... node setup.mjs <server_id>
- *   3. alte kanaele ersetzen:  ... node setup.mjs <server_id> --reset
+ *   2. DISCORD_TOKEN=... node setup.mjs <server_id> --reset --force
  *
  * Test ohne Server und ohne Token:  node setup.mjs <server_id> --dry
  *
- * Es werden NUR rollen, kategorien und kanaele angelegt. Keine texte,
- * keine embeds, keine nachrichten.
+ * Es werden NUR rollen, kategorien und kanaele angelegt. Keine Nachrichten.
  */
 const API = 'https://discord.com/api/v10';
 
@@ -23,7 +24,7 @@ const guildId = args.find((a) => /^\d{15,25}$/.test(a));
 const token = process.env.DISCORD_TOKEN;
 
 if (!guildId) {
-  console.error('usage: DISCORD_TOKEN=<bot token> node setup.mjs <server_id> [--dry] [--reset]');
+  console.error('usage: DISCORD_TOKEN=<bot token> node setup.mjs <server_id> [--dry] [--reset] [--force]');
   process.exit(1);
 }
 if (!dry && !token) {
@@ -62,7 +63,7 @@ const P = {
 const bits = (...list) => list.reduce((a, b) => a | b, 0n).toString();
 
 // ---------------------------------------------------------------------------
-// Rollen (von oben nach unten)
+// Rollen
 // ---------------------------------------------------------------------------
 const ROLES = [
   { name: 'Owner', color: 0xffffff, perms: () => bits(P.Administrator) },
@@ -85,70 +86,67 @@ const ROLES = [
 const STAFF = ['Owner', 'Admin', 'Moderator', 'Helper'];
 
 // ---------------------------------------------------------------------------
-// Aufbau (emoji wie in den referenz-servern)
+// Aufbau - 1:1 wie im referenz-server
+//
+// kind:  'announcement' = megafon   'text' = hashtag   'voice' = lautsprecher
+// lock:  true = schloss (nur staff sieht den kanal)
 // ---------------------------------------------------------------------------
 const LAYOUT = [
   {
-    name: '📢 important',
+    name: null, // ohne kategorie, ganz oben
     channels: [
-      { name: '📢・announcements', readOnly: true, topic: 'News, releases and important changes' },
-      { name: '📜・rules', readOnly: true, topic: 'Read this before posting' },
-      { name: '🔄・updates', readOnly: true, topic: 'Script changelog' },
-      { name: 'ℹ️・info', readOnly: true, topic: 'What this server is and how to load the script' },
+      { name: 'rules', kind: 'announcement', readOnly: true, topic: 'Read this before posting' },
+      { name: 'tos', kind: 'text', readOnly: true, topic: 'Terms of service' },
+      { name: 'STATUS: 🟢', kind: 'text', lock: true, topic: 'Status' },
     ],
   },
   {
-    name: '📥 script',
+    name: 'IMPORTANT',
     channels: [
-      { name: '📥・download', verifiedOnly: true, readOnly: true, topic: 'Loader + how to run it' },
-      { name: '🧾・changelog', readOnly: true, topic: 'Version history' },
-      { name: '🛠️・support', verifiedOnly: true, topic: 'Questions and help - no DMs to staff', slowmode: 10 },
-      { name: '🎬・showcase', verifiedOnly: true, topic: 'Clips and screenshots', slowmode: 15 },
+      { name: '📣・announcements', kind: 'announcement', readOnly: true, topic: 'News and releases' },
+      { name: '📣・affiliate-program', kind: 'text', topic: 'Affiliate program' },
+      { name: '📣・updates', kind: 'text', readOnly: true, topic: 'Changelog' },
+      { name: '🍑・purchase', kind: 'text', topic: 'How to buy' },
+      { name: '🎫・ticket', kind: 'text', topic: 'Open a ticket' },
+      { name: '📘・info', kind: 'text', readOnly: true, topic: 'Info' },
+      { name: '💰・stock', kind: 'text', topic: 'Stock' },
+      { name: '💰・limiteds', kind: 'text', topic: 'Limiteds' },
+      { name: '💰・robux', kind: 'text', topic: 'Robux' },
+      { name: '💰・discord-accounts', kind: 'text', topic: 'Discord accounts' },
     ],
   },
   {
-    name: '💸 purchase',
+    name: 'COMMUNITY',
     channels: [
-      { name: '🎫・ticket', topic: 'Open a ticket for private help' },
-      { name: '💳・purchase', topic: 'How to buy' },
-      { name: '💵・prices', topic: 'Price list' },
+      { name: '💬・chat', kind: 'text', topic: 'Talk here', slowmode: 3 },
+      { name: '🎥・uploads', kind: 'text', topic: 'Clips and screenshots', slowmode: 10 },
+      { name: '💡・suggestions', kind: 'text', topic: 'Ideas' },
+      { name: '⚙️・configs', kind: 'text', topic: 'Share your configs' },
     ],
   },
   {
-    name: '💬 community',
+    name: 'VOUCHES',
     channels: [
-      { name: '💬・chat', topic: 'Talk here', slowmode: 3 },
-      { name: '🖼️・uploads', topic: 'Clips, edits, screenshots', slowmode: 10 },
-      { name: '💡・suggestions', topic: 'Ideas for the script' },
-      { name: '⚙️・configs', topic: 'Share your configs' },
-    ],
-  },
-  {
-    name: '⭐ vouches',
-    channels: [
-      { name: '⭐・reviews', topic: 'Reviews only' },
-      { name: '💬・feedback', topic: 'Feedback and criticism' },
-    ],
-  },
-  {
-    name: '🔊 voice',
-    channels: [
-      { name: '🔊・party chat', voice: true },
-      { name: '🎧・script talk', voice: true },
-    ],
-  },
-  {
-    name: '🛡️ staff',
-    staffOnly: true,
-    channels: [
-      { name: '🛡️・staff-chat', topic: 'Internal' },
-      { name: '📋・logs', readOnly: true, topic: 'Moderation log' },
+      { name: '⭐・reviews', kind: 'text', topic: 'Reviews only' },
+      { name: '💬・feedback', kind: 'text', topic: 'Feedback' },
     ],
   },
 ];
 
-// Was ein frueherer lauf angelegt hat (ohne emoji). Nur mit --reset.
-const LEGACY = {
+// Namen aus frueheren Laeufen, damit --reset sauber aufraeumt.
+const OLD_EMOJI = {
+  categories: ['📢 important', '📥 script', '💸 purchase', '💬 community', '⭐ vouches', '🔊 voice', '🛡️ staff'],
+  channels: [
+    '📢・announcements', '📜・rules', '🔄・updates', 'ℹ️・info',
+    '📥・download', '🧾・changelog', '🛠️・support', '🎬・showcase',
+    '🎫・ticket', '💳・purchase', '💵・prices',
+    '💬・chat', '🖼️・uploads', '💡・suggestions', '⚙️・configs',
+    '⭐・reviews', '💬・feedback',
+    '🔊・party chat', '🎧・script talk',
+    '🛡️・staff-chat', '📋・logs',
+  ],
+};
+const OLD_PLAIN = {
   categories: ['INFO', 'SCRIPT', 'COMMUNITY', 'VOICE', 'STAFF'],
   channels: [
     'announcements', 'rules', 'updates', 'info',
@@ -189,19 +187,22 @@ async function api(path, { method = 'GET', body } = {}) {
   throw new Error(`rate limited: ${method} ${path}`);
 }
 
+/** 0 text, 2 voice, 4 category, 5 announcement */
+const CHANNEL_TYPE = { text: 0, voice: 2, announcement: 5 };
+
 function overwritesFor(spec, roles) {
   const everyone = guildId;
-  const ow = [];
   const staff = STAFF.map((n) => roles[n]);
+  const ow = [];
 
-  if (spec.staffOnly) {
+  if (spec.lock) {
     ow.push({ id: everyone, type: 0, deny: bits(P.ViewChannel) });
+    ow.push({ id: roles.Verified.id, type: 0, deny: bits(P.ViewChannel) });
     for (const r of staff) ow.push({ id: r.id, type: 0, allow: bits(P.ViewChannel, P.SendMessages, P.ReadMessageHistory) });
-  } else if (spec.verifiedOnly) {
-    ow.push({ id: everyone, type: 0, deny: bits(P.ViewChannel) });
-    ow.push({ id: roles.Verified.id, type: 0, allow: bits(P.ViewChannel, P.ReadMessageHistory) });
-    for (const r of staff) ow.push({ id: r.id, type: 0, allow: bits(P.ViewChannel, P.SendMessages, P.ReadMessageHistory) });
-  } else if (spec.readOnly) {
+    return ow;
+  }
+
+  if (spec.readOnly) {
     ow.push({ id: everyone, type: 0, allow: bits(P.ViewChannel, P.ReadMessageHistory), deny: bits(P.SendMessages, P.CreatePublicThreads) });
     for (const r of staff) ow.push({ id: r.id, type: 0, allow: bits(P.SendMessages) });
   } else if (spec.voice) {
@@ -210,7 +211,9 @@ function overwritesFor(spec, roles) {
     return ow;
   }
 
-  ow.push({ id: roles.Muted.id, type: 0, deny: bits(P.SendMessages, P.CreatePublicThreads, P.AddReactions) });
+  if (spec.kind !== 'voice') {
+    ow.push({ id: roles.Muted.id, type: 0, deny: bits(P.SendMessages, P.CreatePublicThreads, P.AddReactions) });
+  }
   return ow;
 }
 
@@ -223,22 +226,23 @@ function printPlan() {
   console.log('roles');
   for (const r of ROLES) console.log(`  ${r.name.padEnd(10)} perms ${r.perms()}`);
   console.log('');
-  console.log('channels');
+  console.log('channels (megafon = announcement, # = text, schloss = privat)');
   for (const group of LAYOUT) {
-    console.log(`  [${group.name}]${group.staffOnly ? ' (staff only)' : ''}`);
+    console.log(`  ${group.name ? `[${group.name}]` : '[no category]'}`);
     for (const ch of group.channels) {
+      const icon = ch.kind === 'announcement' ? 'megafon' : ch.kind === 'voice' ? 'voice' : '#';
       const flags = [
-        ch.voice ? 'voice' : 'text',
+        icon,
         ch.readOnly && 'read-only',
-        ch.verifiedOnly && 'verified',
+        ch.lock && 'private',
         ch.slowmode && `slowmode ${ch.slowmode}s`,
       ].filter(Boolean).join(', ');
-      console.log(`    ${ch.name.padEnd(22)} ${flags}`);
+      console.log(`    ${ch.name.padEnd(26)} ${flags}`);
     }
   }
   console.log('');
   console.log(`${ROLES.length} roles, ${LAYOUT.reduce((n, g) => n + g.channels.length, 0)} channels, no messages`);
-  if (reset) console.log(`reset: legacy channels without emoji are removed first${force ? ' (even with messages)' : ' (empty ones only)'}`);
+  if (reset) console.log(`reset: everything this script ever created is removed first${force ? ' (even with messages)' : ' (empty ones only)'}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -248,12 +252,25 @@ const created = [];
 const kept = [];
 const removed = [];
 
-async function removeLegacy() {
+function knownNames() {
+  const names = new Set();
+  for (const group of LAYOUT) {
+    if (group.name) names.add(group.name);
+    for (const ch of group.channels) names.add(ch.name);
+  }
+  for (const n of OLD_EMOJI.categories) names.add(n);
+  for (const n of OLD_EMOJI.channels) names.add(n);
+  for (const n of OLD_PLAIN.categories) names.add(n);
+  for (const n of OLD_PLAIN.channels) names.add(n);
+  return names;
+}
+
+async function removeKnown(names) {
   const all = await api(`/guilds/${guildId}/channels`);
 
   for (const ch of all) {
     if (ch.type === 4) continue;
-    if (!LEGACY.channels.includes(ch.name)) continue;
+    if (!names.has(ch.name)) continue;
     if (ch.type === 0 && !force) {
       const msgs = await api(`/channels/${ch.id}/messages?limit=1`).catch(() => []);
       if (Array.isArray(msgs) && msgs.length > 0) {
@@ -271,10 +288,10 @@ async function removeLegacy() {
     }
   }
 
+  // kategorien erst danach, und nur wenn sie leer sind
   const left = await api(`/guilds/${guildId}/channels`);
   for (const ch of left) {
-    if (ch.type !== 4) continue;
-    if (!LEGACY.categories.includes(ch.name)) continue;
+    if (ch.type !== 4 || !names.has(ch.name)) continue;
     if (left.some((c) => c.parent_id === ch.id)) continue;
     try {
       await api(`/channels/${ch.id}`, { method: 'DELETE' });
@@ -293,7 +310,7 @@ async function run() {
 
   if (reset) {
     console.log('reset');
-    await removeLegacy();
+    await removeKnown(knownNames());
   }
 
   const existingRoles = await api(`/guilds/${guildId}/roles`);
@@ -319,41 +336,55 @@ async function run() {
   const existing = await api(`/guilds/${guildId}/channels`);
 
   for (const group of LAYOUT) {
-    let category = existing.find((c) => c.type === 4 && c.name === group.name);
-    if (!category) {
-      category = await api(`/guilds/${guildId}/channels`, {
-        method: 'POST',
-        body: { name: group.name, type: 4 },
-      });
-      created.push(`category ${group.name}`);
-      console.log(`  + category ${group.name}`);
-      await sleep(120);
-    } else {
-      kept.push(`category ${group.name}`);
-      console.log(`  = category ${group.name}`);
+    let category = null;
+    if (group.name) {
+      category = existing.find((c) => c.type === 4 && c.name === group.name);
+      if (!category) {
+        category = await api(`/guilds/${guildId}/channels`, {
+          method: 'POST',
+          body: { name: group.name, type: 4 },
+        });
+        created.push(`category ${group.name}`);
+        console.log(`  + category ${group.name}`);
+        await sleep(120);
+      } else {
+        kept.push(`category ${group.name}`);
+        console.log(`  = category ${group.name}`);
+      }
     }
 
     for (const spec of group.channels) {
-      const type = spec.voice ? 2 : 0;
+      const type = CHANNEL_TYPE[spec.kind ?? 'text'];
       const hit = existing.find((c) => c.name === spec.name && c.type === type);
       if (hit) {
         kept.push(`channel ${spec.name}`);
-        console.log(`  = ${type === 2 ? 'voice   ' : 'channel '} ${spec.name}`);
+        console.log(`  = channel  ${spec.name}`);
         continue;
       }
-      await api(`/guilds/${guildId}/channels`, {
-        method: 'POST',
-        body: {
-          name: spec.name,
-          type,
-          parent_id: category.id,
-          topic: type === 0 ? spec.topic : undefined,
-          rate_limit_per_user: type === 0 ? (spec.slowmode ?? 0) : undefined,
-          permission_overwrites: overwritesFor(spec, roles),
-        },
-      });
-      created.push(`${type === 2 ? 'voice' : 'channel'} ${spec.name}`);
-      console.log(`  + ${type === 2 ? 'voice   ' : 'channel '} ${spec.name}`);
+      const body = {
+        name: spec.name,
+        type,
+        parent_id: category ? category.id : undefined,
+        topic: type === 2 ? undefined : spec.topic,
+        rate_limit_per_user: type === 0 ? (spec.slowmode ?? 0) : undefined,
+        permission_overwrites: overwritesFor(spec, roles),
+      };
+      try {
+        await api(`/guilds/${guildId}/channels`, { method: 'POST', body });
+      } catch (err) {
+        // megafon-kanal braucht das Community-feature. Ohne das: als text anlegen,
+        // damit nichts abbricht.
+        if (type === 5 && (err.status === 400 || err.status === 403)) {
+          await api(`/guilds/${guildId}/channels`, { method: 'POST', body: { ...body, type: 0 } });
+          console.log(`  ! channel  ${spec.name} (announcement braucht Community -> als text)`);
+          created.push(`channel ${spec.name}`);
+          await sleep(160);
+          continue;
+        }
+        throw err;
+      }
+      created.push(`channel ${spec.name}`);
+      console.log(`  + channel  ${spec.name}`);
       await sleep(160);
     }
   }
@@ -362,10 +393,9 @@ async function run() {
   console.log(`done: ${created.length} created, ${kept.length} already there${removed.length ? `, ${removed.length} removed` : ''}`);
   console.log('');
   console.log('manual after this:');
-  console.log('  - verification: Server Settings > Onboarding, so new members need Verified');
-  console.log('    (otherwise they cannot see download / support / showcase)');
+  console.log('  - drag the categories into order (IMPORTANT, COMMUNITY, VOUCHES)');
   console.log('  - give yourself the Owner role');
-  console.log('  - drag categories into order, upload the banner');
+  console.log('  - upload the banner');
 }
 
 if (dry) {

@@ -1,8 +1,8 @@
 # ryuk hub - discord setup
 
 Eine Datei, keine dependencies, keine Nachrichten in den Kanaelen.
-Legt Rollen, Kategorien und Kanaele an — mit den Emojis wie in den
-Referenz-Servern. Idempotent: was schon da ist, bleibt unangetastet.
+Der Aufbau ist 1:1 der Referenz-Server: gleiche Kategorien, gleiche
+Kanal-Namen mit Emoji, gleiche Kanal-Typen.
 
 ## 1. Server anlegen
 
@@ -20,7 +20,7 @@ Discord -> **+** -> **Server erstellen** -> Name (z. B. `ryuk hub`).
 ```powershell
 Invoke-WebRequest "https://raw.githubusercontent.com/Ryukgs/fias-script/main/discord/setup-standalone.mjs" -OutFile setup.mjs
 $env:DISCORD_TOKEN="DEIN_TOKEN"
-node setup.mjs <server_id>
+node setup.mjs <server_id> --reset --force
 ```
 
 Erst schauen, was passieren wuerde (ohne Token, ohne Server):
@@ -32,43 +32,55 @@ node setup.mjs <server_id> --dry
 Server-ID: Einstellungen -> Erweitert -> Entwicklermodus an, dann Rechtsklick
 auf den Server -> **Server-ID kopieren**.
 
-### Alte Kanaele ersetzen
-
-Wenn schon ein Satz ohne Emoji im Server liegt (announcements, rules, general,
-staff-chat ...), einmal mit `--reset` laufen lassen. Alte Kanaele mit Nachrichten
-bleiben standardmaessig stehen; mit `--force` werden sie auch entfernt:
-
-```powershell
-node setup.mjs <server_id> --reset --force
-```
+`--reset` raeumt alles weg, was frueher von diesem Script angelegt wurde
+(beide alten Layouts). Ohne `--force` bleiben Kanaele mit Nachrichten stehen.
 
 ## Aufbau
 
 ```
-📢 important   📢・announcements  📜・rules  🔄・updates  ℹ️・info
-📥 script      📥・download  🧾・changelog  🛠️・support  🎬・showcase
-💸 purchase    🎫・ticket  💳・purchase  💵・prices
-💬 community   💬・chat  🖼️・uploads  💡・suggestions  ⚙️・configs
-⭐ vouches     ⭐・reviews  💬・feedback
-🔊 voice       🔊・party chat  🎧・script talk
-🛡️ staff       🛡️・staff-chat  📋・logs        (nur Staff sichtbar)
+rules                       Megafon, read-only      (ohne Kategorie)
+tos                         #, read-only
+STATUS: 🟢                  #, privat (nur Staff)
+
+IMPORTANT
+  📣・announcements          Megafon, read-only
+  📣・affiliate-program      #
+  📣・updates                #, read-only
+  🍑・purchase               #
+  🎫・ticket                 #
+  📘・info                   #, read-only
+  💰・stock                  #
+  💰・limiteds               #
+  💰・robux                  #
+  💰・discord-accounts       #
+
+COMMUNITY
+  💬・chat                   #, slowmode 3s
+  🎥・uploads                #, slowmode 10s
+  💡・suggestions            #
+  ⚙️・configs                #
+
+VOUCHES
+  ⭐・reviews                #
+  💬・feedback               #
 ```
 
+**Kanal-Typen wie im Bild:**
+
+- **Megafon** = Announcement-Kanal (`rules`, `📣・announcements`). Braucht das
+  Community-Feature im Server. Ist es aus, legt das Script die Kanaele als
+  normale Text-Kanaele an, statt abzubrechen.
+- **#** = normaler Text-Kanal.
+- **Schloss** = privat, nur Staff sieht ihn (`STATUS: 🟢`).
+
 Rollen von oben nach unten: `Owner`, `Admin`, `Moderator`, `Helper`, `Verified`,
-`Member`, `Muted` (Graustufen, damit es zum schwarz/weiß-Look passt).
-
-Rechte:
-
-- `download`, `support`, `showcase` nur fuer `Verified`
-- `announcements`, `rules`, `updates`, `info`, `changelog`, `logs` read-only
-- `staff`-Kategorie komplett unsichtbar fuer alle anderen
-- `Muted` kann nirgends schreiben oder sprechen
+`Member`, `Muted` (Graustufen, passend zum schwarz/weiß-Look).
 
 ## Was noch per Hand kommt
 
-- **Verifizierung**: Server Settings -> Onboarding, damit neue Member `Verified`
-  bekommen. Sonst sehen sie `script` nicht.
-- **Reihenfolge** der Kategorien ziehen.
+- **Community aktivieren**, wenn du die Megafon-Icons willst:
+  Server Settings -> Enable Community.
+- **Reihenfolge** der Kategorien ziehen (IMPORTANT, COMMUNITY, VOUCHES).
 - **Banner** hochladen (16:9).
 - Dir selbst die Rolle `Owner` geben.
 
