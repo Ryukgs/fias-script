@@ -29,6 +29,8 @@ const {
   MIN_ACCOUNT_AGE_DAYS = '7',
 } = process.env;
 
+console.log('ryuk bot v3');
+
 const here = dirname(fileURLToPath(import.meta.url));
 const statePath = join(here, 'verify-panel.json');
 
@@ -37,6 +39,7 @@ const statePath = join(here, 'verify-panel.json');
 // "Bot " werden entfernt, weil das die haeufigsten Kopierfehler sind.
 function cleanToken(value) {
   return String(value ?? '')
+    .replace(/^\uFEFF/, '')
     .trim()
     .replace(/^["']|["']$/g, '')
     .replace(/^Bot\s+/i, '')
@@ -55,7 +58,9 @@ function loadToken() {
       // Datei fehlt -> naechste Quelle
     }
   }
-  return cleanToken(process.env.DISCORD_TOKEN);
+  const fromEnv = cleanToken(process.env.DISCORD_TOKEN);
+  if (fromEnv) console.log('token aus der Umgebung (.env / start.cmd)');
+  return fromEnv;
 }
 
 const TOKEN = loadToken();
