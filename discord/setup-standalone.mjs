@@ -2,22 +2,27 @@
 /**
  * ryuk hub - discord setup (standalone, keine dependencies)
  *
- * Braucht nur Node 18+. Kein npm install, kein discord.js.
+ * Braucht nur Node 18+. Kein npm install.
  *
  *   1. Bot im Server (Administrator)
  *   2. DISCORD_TOKEN=... node setup.mjs <server_id>
+ *   3. alte kanaele ersetzen:  ... node setup.mjs <server_id> --reset
  *
- * Test ohne Server:  node setup.mjs <server_id> --dry
+ * Test ohne Server und ohne Token:  node setup.mjs <server_id> --dry
+ *
+ * Es werden NUR rollen, kategorien und kanaele angelegt. Keine texte,
+ * keine embeds, keine nachrichten.
  */
 const API = 'https://discord.com/api/v10';
 
 const args = process.argv.slice(2);
 const dry = args.includes('--dry');
+const reset = args.includes('--reset');
 const guildId = args.find((a) => /^\d{15,25}$/.test(a));
 const token = process.env.DISCORD_TOKEN;
 
 if (!guildId) {
-  console.error('usage: DISCORD_TOKEN=<bot token> node setup.mjs <server_id> [--dry]');
+  console.error('usage: DISCORD_TOKEN=<bot token> node setup.mjs <server_id> [--dry] [--reset]');
   process.exit(1);
 }
 if (!dry && !token) {
@@ -56,7 +61,7 @@ const P = {
 const bits = (...list) => list.reduce((a, b) => a | b, 0n).toString();
 
 // ---------------------------------------------------------------------------
-// Aufbau
+// Rollen (von oben nach unten)
 // ---------------------------------------------------------------------------
 const ROLES = [
   { name: 'Owner', color: 0xffffff, perms: () => bits(P.Administrator) },
@@ -78,144 +83,79 @@ const ROLES = [
 ];
 const STAFF = ['Owner', 'Admin', 'Moderator', 'Helper'];
 
+// ---------------------------------------------------------------------------
+// Aufbau (emoji wie in den referenz-servern)
+// ---------------------------------------------------------------------------
 const LAYOUT = [
   {
-    name: 'INFO',
+    name: '📢 important',
     channels: [
-      { name: 'announcements', readOnly: true, topic: 'News, releases and important changes', post: 'announcements' },
-      { name: 'rules', readOnly: true, topic: 'Read this before posting', post: 'rules' },
-      { name: 'updates', readOnly: true, topic: 'Script changelog', post: 'changelog' },
-      { name: 'info', readOnly: true, topic: 'What this server is and how to load the script', post: 'info' },
+      { name: '📢・announcements', readOnly: true, topic: 'News, releases and important changes' },
+      { name: '📜・rules', readOnly: true, topic: 'Read this before posting' },
+      { name: '🔄・updates', readOnly: true, topic: 'Script changelog' },
+      { name: 'ℹ️・info', readOnly: true, topic: 'What this server is and how to load the script' },
     ],
   },
   {
-    name: 'SCRIPT',
+    name: '📥 script',
     channels: [
-      { name: 'download', verifiedOnly: true, readOnly: true, topic: 'Loader + how to run it', post: 'download' },
-      { name: 'support', verifiedOnly: true, topic: 'Questions and help - no DMs to staff', slowmode: 10, post: 'support' },
-      { name: 'showcase', verifiedOnly: true, topic: 'Clips and screenshots', slowmode: 15 },
+      { name: '📥・download', verifiedOnly: true, readOnly: true, topic: 'Loader + how to run it' },
+      { name: '🧾・changelog', readOnly: true, topic: 'Version history' },
+      { name: '🛠️・support', verifiedOnly: true, topic: 'Questions and help - no DMs to staff', slowmode: 10 },
+      { name: '🎬・showcase', verifiedOnly: true, topic: 'Clips and screenshots', slowmode: 15 },
     ],
   },
   {
-    name: 'COMMUNITY',
+    name: '💸 purchase',
     channels: [
-      { name: 'general', topic: 'Talk here', slowmode: 3 },
-      { name: 'media', topic: 'Clips, edits, screenshots', slowmode: 10 },
-      { name: 'memes', topic: 'Memes', slowmode: 10 },
-      { name: 'bot-commands', topic: 'Bot spam only', slowmode: 5 },
+      { name: '🎫・ticket', topic: 'Open a ticket for private help' },
+      { name: '💳・purchase', topic: 'How to buy' },
+      { name: '💵・prices', topic: 'Price list' },
     ],
   },
   {
-    name: 'VOICE',
+    name: '💬 community',
     channels: [
-      { name: 'General', voice: true },
-      { name: 'Chill', voice: true },
-      { name: 'Script Talk', voice: true },
+      { name: '💬・chat', topic: 'Talk here', slowmode: 3 },
+      { name: '🖼️・uploads', topic: 'Clips, edits, screenshots', slowmode: 10 },
+      { name: '💡・suggestions', topic: 'Ideas for the script' },
+      { name: '⚙️・configs', topic: 'Share your configs' },
     ],
   },
   {
-    name: 'STAFF',
+    name: '⭐ vouches',
+    channels: [
+      { name: '⭐・reviews', topic: 'Reviews only' },
+      { name: '💬・feedback', topic: 'Feedback and criticism' },
+    ],
+  },
+  {
+    name: '🔊 voice',
+    channels: [
+      { name: '🔊・party chat', voice: true },
+      { name: '🎧・script talk', voice: true },
+    ],
+  },
+  {
+    name: '🛡️ staff',
     staffOnly: true,
     channels: [
-      { name: 'staff-chat', topic: 'Internal' },
-      { name: 'logs', readOnly: true, topic: 'Moderation log' },
+      { name: '🛡️・staff-chat', topic: 'Internal' },
+      { name: '📋・logs', readOnly: true, topic: 'Moderation log' },
     ],
   },
 ];
 
-const LOADER = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/Ryukgs/fias-script/main/loader.lua"))()';
-
-const TEXTS = {
-  announcements: {
-    title: 'Server is live',
-    lines: [
-      '**ryuk hub** is open.',
-      '',
-      'Script releases, changelogs and support all land here from now on.',
-      'Grab the loader in {download} and read the rules before posting.',
-    ],
-  },
-  rules: {
-    title: 'Rules',
-    lines: [
-      '**1.** Respect everyone. No racism, insults, threats or harassment.',
-      '**2.** No spam, no advertising, no server invites.',
-      '**3.** No NSFW content anywhere.',
-      '**4.** Support only in {support}, never in staff DMs.',
-      '**5.** Do not leak the script, its key or paid content.',
-      '**6.** Follow staff instructions. Arguing in public gets you muted.',
-      '**7.** No alt accounts to dodge mutes or bans.',
-      '',
-      'Breaking a rule = mute, kick or ban, depending on severity.',
-    ],
-  },
-  info: {
-    title: 'ryuk hub',
-    lines: [
-      'Script for **Fight in a School**.',
-      '',
-      '**Features**',
-      '• Auto Weave - constant weave window, no gap while punching or dodging',
-      '• Auto Punch / Auto Dodge',
-      '• Potato mode, no camera effects',
-      '• Clean menu: Main / Misc / Config',
-      '',
-      '**How to load**',
-      '```lua',
-      LOADER,
-      '```',
-      'RightShift opens the menu.',
-      '',
-      '**Channels**',
-      '• {download} - loader',
-      '• {updates} - changelog',
-      '• {support} - help',
-    ],
-  },
-  download: {
-    title: 'Download',
-    lines: [
-      '**Loader**',
-      '```lua',
-      LOADER,
-      '```',
-      '**Steps**',
-      '1. Copy the line above.',
-      '2. Paste it into your executor and execute.',
-      '3. RightShift opens and closes the menu.',
-      '',
-      '**If it does not load**',
-      '• Clear the executor cache and execute again.',
-      '• Check {updates} for the current version.',
-      '• Still stuck? Ask in {support} with your executor name and a screenshot.',
-    ],
-  },
-  changelog: {
-    title: 'v1.0',
-    lines: [
-      '**Auto Weave is finished**',
-      '• Steady weave with a fixed cadence - no flicker while standing or dodging',
-      '• Punch and dodge no longer close the window, so combo spam stays covered',
-      '• Instant reopen if the server ever drops the window',
-      '',
-      '**Versioning**',
-      'From here on every release goes up by 0.1: 1.1, 1.2, 1.3 ...',
-    ],
-  },
-  support: {
-    title: 'Support',
-    lines: [
-      'Ask here, not in DMs. One question per message, please.',
-      '',
-      '**Include**',
-      '• What you expected and what happened',
-      '• Your executor',
-      '• Script version (shown in the menu header)',
-      '• A screenshot or clip if it is visual',
-      '',
-      'Staff will answer as soon as someone is free.',
-    ],
-  },
+// Was ein frueherer lauf angelegt hat (ohne emoji). Nur mit --reset.
+const LEGACY = {
+  categories: ['INFO', 'SCRIPT', 'COMMUNITY', 'VOICE', 'STAFF'],
+  channels: [
+    'announcements', 'rules', 'updates', 'info',
+    'download', 'support', 'showcase',
+    'general', 'media', 'memes', 'bot-commands',
+    'General', 'Chill', 'Script Talk',
+    'staff-chat', 'logs',
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -274,7 +214,7 @@ function overwritesFor(spec, roles) {
 }
 
 // ---------------------------------------------------------------------------
-// Plan (auch fuer --dry)
+// Plan (--dry)
 // ---------------------------------------------------------------------------
 function printPlan() {
   console.log(`server id: ${guildId}`);
@@ -286,13 +226,18 @@ function printPlan() {
   for (const group of LAYOUT) {
     console.log(`  [${group.name}]${group.staffOnly ? ' (staff only)' : ''}`);
     for (const ch of group.channels) {
-      const flags = [ch.voice ? 'voice' : 'text', ch.readOnly && 'read-only', ch.verifiedOnly && 'verified', ch.slowmode && `slowmode ${ch.slowmode}s`, ch.post && `text: ${ch.post}`]
-        .filter(Boolean).join(', ');
-      console.log(`    ${ch.name.padEnd(16)} ${flags}`);
+      const flags = [
+        ch.voice ? 'voice' : 'text',
+        ch.readOnly && 'read-only',
+        ch.verifiedOnly && 'verified',
+        ch.slowmode && `slowmode ${ch.slowmode}s`,
+      ].filter(Boolean).join(', ');
+      console.log(`    ${ch.name.padEnd(22)} ${flags}`);
     }
   }
   console.log('');
-  console.log(`${ROLES.length} roles, ${LAYOUT.reduce((n, g) => n + g.channels.length, 0)} channels`);
+  console.log(`${ROLES.length} roles, ${LAYOUT.reduce((n, g) => n + g.channels.length, 0)} channels, no messages`);
+  if (reset) console.log('reset: legacy channels without emoji are removed first (empty ones only)');
 }
 
 // ---------------------------------------------------------------------------
@@ -300,10 +245,55 @@ function printPlan() {
 // ---------------------------------------------------------------------------
 const created = [];
 const kept = [];
+const removed = [];
+
+async function removeLegacy() {
+  const all = await api(`/guilds/${guildId}/channels`);
+
+  for (const ch of all) {
+    if (ch.type === 4) continue;
+    if (!LEGACY.channels.includes(ch.name)) continue;
+    if (ch.type === 0) {
+      const msgs = await api(`/channels/${ch.id}/messages?limit=1`).catch(() => []);
+      if (Array.isArray(msgs) && msgs.length > 0) {
+        console.log(`  ~ keep     ${ch.name} (has messages)`);
+        continue;
+      }
+    }
+    try {
+      await api(`/channels/${ch.id}`, { method: 'DELETE' });
+      removed.push(ch.name);
+      console.log(`  - remove   ${ch.name}`);
+      await sleep(150);
+    } catch (err) {
+      console.log(`  ! remove   ${ch.name}: ${err.message}`);
+    }
+  }
+
+  const left = await api(`/guilds/${guildId}/channels`);
+  for (const ch of left) {
+    if (ch.type !== 4) continue;
+    if (!LEGACY.categories.includes(ch.name)) continue;
+    if (left.some((c) => c.parent_id === ch.id)) continue;
+    try {
+      await api(`/channels/${ch.id}`, { method: 'DELETE' });
+      removed.push(ch.name);
+      console.log(`  - remove   [${ch.name}]`);
+      await sleep(150);
+    } catch (err) {
+      console.log(`  ! remove   [${ch.name}]: ${err.message}`);
+    }
+  }
+}
 
 async function run() {
   const guild = await api(`/guilds/${guildId}`);
   console.log(`server: ${guild.name} (${guild.id})`);
+
+  if (reset) {
+    console.log('reset');
+    await removeLegacy();
+  }
 
   const existingRoles = await api(`/guilds/${guildId}/roles`);
   const roles = {};
@@ -325,11 +315,10 @@ async function run() {
     await sleep(120);
   }
 
-  const existingChannels = await api(`/guilds/${guildId}/channels`);
-  const channels = {};
+  const existing = await api(`/guilds/${guildId}/channels`);
 
   for (const group of LAYOUT) {
-    let category = existingChannels.find((c) => c.type === 4 && c.name === group.name);
+    let category = existing.find((c) => c.type === 4 && c.name === group.name);
     if (!category) {
       category = await api(`/guilds/${guildId}/channels`, {
         method: 'POST',
@@ -345,70 +334,35 @@ async function run() {
 
     for (const spec of group.channels) {
       const type = spec.voice ? 2 : 0;
-      if (!channels[spec.name]) {
-        const hit = existingChannels.find((c) => c.name === spec.name && c.type === type);
-        if (hit) {
-          channels[spec.name] = hit;
-          kept.push(`channel ${spec.name}`);
-          console.log(`  = channel  ${spec.name}`);
-          continue;
-        }
-        const ch = await api(`/guilds/${guildId}/channels`, {
-          method: 'POST',
-          body: {
-            name: spec.name,
-            type,
-            parent_id: category.id,
-            topic: type === 0 ? spec.topic : undefined,
-            rate_limit_per_user: type === 0 ? (spec.slowmode ?? 0) : undefined,
-            permission_overwrites: overwritesFor(spec, roles),
-          },
-        });
-        channels[spec.name] = ch;
-        created.push(`${type === 2 ? 'voice' : 'channel'} ${spec.name}`);
-        console.log(`  + ${type === 2 ? 'voice   ' : 'channel '} ${spec.name}`);
-        await sleep(150);
+      const hit = existing.find((c) => c.name === spec.name && c.type === type);
+      if (hit) {
+        kept.push(`channel ${spec.name}`);
+        console.log(`  = ${type === 2 ? 'voice   ' : 'channel '} ${spec.name}`);
+        continue;
       }
-    }
-  }
-
-  console.log('  texts');
-  const lookup = { download: channels.download, updates: channels.updates, support: channels.support };
-  for (const group of LAYOUT) {
-    for (const spec of group.channels) {
-      if (!spec.post) continue;
-      const ch = channels[spec.name];
-      if (!ch) continue;
-      try {
-        const recent = await api(`/channels/${ch.id}/messages?limit=1`);
-        if (recent.length > 0) {
-          console.log(`  = text     ${spec.name}`);
-          continue;
-        }
-        const text = TEXTS[spec.post];
-        let description = text.lines.join('\n');
-        for (const [name, target] of Object.entries(lookup)) {
-          description = description.split(`{${name}}`).join(target ? `<#${target.id}>` : `#${name}`);
-        }
-        await api(`/channels/${ch.id}/messages`, {
-          method: 'POST',
-          body: { embeds: [{ title: text.title, description, color: 0xffffff }] },
-        });
-        created.push(`text ${spec.name}`);
-        console.log(`  + text     ${spec.name}`);
-        await sleep(150);
-      } catch (err) {
-        console.log(`  ! text     ${spec.name}: ${err.message}`);
-      }
+      await api(`/guilds/${guildId}/channels`, {
+        method: 'POST',
+        body: {
+          name: spec.name,
+          type,
+          parent_id: category.id,
+          topic: type === 0 ? spec.topic : undefined,
+          rate_limit_per_user: type === 0 ? (spec.slowmode ?? 0) : undefined,
+          permission_overwrites: overwritesFor(spec, roles),
+        },
+      });
+      created.push(`${type === 2 ? 'voice' : 'channel'} ${spec.name}`);
+      console.log(`  + ${type === 2 ? 'voice   ' : 'channel '} ${spec.name}`);
+      await sleep(160);
     }
   }
 
   console.log('');
-  console.log(`done: ${created.length} created, ${kept.length} already there`);
+  console.log(`done: ${created.length} created, ${kept.length} already there${removed.length ? `, ${removed.length} removed` : ''}`);
   console.log('');
   console.log('manual after this:');
   console.log('  - verification: Server Settings > Onboarding, so new members need Verified');
-  console.log('    (otherwise they cannot see download/support)');
+  console.log('    (otherwise they cannot see download / support / showcase)');
   console.log('  - give yourself the Owner role');
   console.log('  - drag categories into order, upload the banner');
 }
@@ -419,7 +373,7 @@ if (dry) {
   run().catch((err) => {
     console.error('');
     console.error(`error: ${err.message}`);
-    if (err.status === 401) console.error('token invalid - did you reset it after posting it in chat?');
+    if (err.status === 401) console.error('token invalid - reset it in the developer portal');
     if (err.status === 403) console.error('bot lacks permissions - invite it with Administrator');
     if (err.status === 404) console.error('server id wrong, or the bot is not on that server');
     process.exit(1);
