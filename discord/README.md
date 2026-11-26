@@ -28,7 +28,7 @@ Wenn das Script geupdated wird, wird Discord **immer** mitgepflegt:
 
 - **+0.1 nur bei neuen Features** (neuer Toggle/Slider/Funktion)
 - Verbesserungen an bestehenden Features (Fix, Tuning) = **kein Bump**,
-  Update-Post traegt dann nur die aktuelle Version
+  Update-Post bleibt ohne Versionsnummer
 
 News vom Nutzer -> sofort `#❗・announcement`.
 Jedes Script-Update -> **immer** neuer Post in `#🛠・updates`.
