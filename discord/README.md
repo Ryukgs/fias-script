@@ -9,16 +9,21 @@ Kanal-Namen mit Emoji, gleiche Kanal-Typen.
 Wenn das Script geupdated wird, wird Discord **immer** mitgepflegt:
 
 - `#👀・features` -> Liste der Funktionen aktualisieren, falls sich was geaendert hat
-- `#❗・announcement` -> Post im Format:
+- `#🛠・updates` -> Post im Format:
 
   ```
   new update
 
+  **v1.x**
   - ...
   - ...
   ```
 
-Beides auf Englisch, ohne Nachfrage.
+- `#❗・announcement` -> nur allgemeine Neuigkeiten, keine Script-Updates
+- `#ℹ️・info` -> Version, erlaubter Executor (nur Madium), Anti-Cheat-Bypass (Adonis)
+  aktualisieren, wenn sich was aendert
+
+Alles auf Englisch, ohne Nachfrage.
 
 ## 1. Server anlegen
 
