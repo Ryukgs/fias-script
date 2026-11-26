@@ -14,10 +14,11 @@ Wenn das Script geupdated wird, wird Discord **immer** mitgepflegt:
   ```
   new update
 
-  **v1.x**
   - ...
   - ...
   ```
+
+  ohne Versionsnummer - nur was neu/verbessert ist
 
 - `#❗・announcement` -> nur allgemeine Neuigkeiten, keine Script-Updates
 - `#ℹ️・info` -> Version, erlaubter Executor (nur Madium), Anti-Cheat-Bypass (Adonis)

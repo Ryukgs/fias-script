@@ -13,17 +13,17 @@ mitgepflegt:
    ```
    new update
 
-   **v1.x**
    - ...
    - ...
    ```
 
-   Kurz, Englisch, nur was sich wirklich geaendert hat. Version aus dem
-   `CHANGELOG` in `src/source.lua`.
+   **Keine Versionsnummer im Post** - nur was neu ist und was verbessert wurde.
+   Kurz, Englisch, nur echte Aenderungen.
 3. **`#❗・announcement`** nur fuer allgemeine Neuigkeiten (free/paid, Events,
    grosse Ankuendigungen) - **keine** Script-Updates.
-4. **`#ℹ️・info`** aktualisieren, wenn sich Version, erlaubter Executor
-   (aktuell nur **Madium**) oder der Anti-Cheat-Bypass (Adonis) aendert.
+4. **`#ℹ️・info`** aktualisieren, wenn sich Version, Executor-Support oder der
+   Anti-Cheat-Bypass (Adonis) aendert. Die **Version steht nur hier** (und im
+   `CHANGELOG` in `src/source.lua`), niemals im Update-Post.
 
 Alles auf Englisch, Kanaele sind read-only (Post per Bot).
 
@@ -32,16 +32,14 @@ Alles auf Englisch, Kanaele sind read-only (Post per Bot).
 - Version **+0.1 nur bei neuen Features** (neuer Toggle, neuer Slider, neue
   Funktion, die es vorher nicht gab).
 - **Verbesserungen an bestehenden Features (Bugfix, Feintuning, schneller,
-  stabiler) = KEIN Versionsbump.** Dann bleibt die Version gleich und der
-  Update-Post traegt die aktuelle Version.
-- Bei jedem Update trotzdem `#🛠・updates` posten und im `CHANGELOG` in
-  `src/source.lua` ergaenzen (unter der aktuellen Version).
+  stabiler) = KEIN Versionsbump.**
+- Bei jedem Update trotzdem `#🛠・updates` posten (ohne Version) und im
+  `CHANGELOG` in `src/source.lua` ergaenzen.
 
-Zusaetzlich:
+## Zusaetzlich
 
 - **News vom Nutzer** (Ankuendigungen, free/paid, Events) -> sofort nach
   `#❗・announcement` posten, Englisch, kurz.
-- **Jedes Script-Update** bekommt **immer** einen neuen Post in
-  `#🛠・updates` (Version + was sich geaendert hat).
+- **Jedes Script-Update** bekommt **immer** einen neuen Post in `#🛠・updates`.
 
 Nicht fragen, ob gepostet werden soll - einfach machen und danach kurz melden.
