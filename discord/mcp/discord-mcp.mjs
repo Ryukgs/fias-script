@@ -149,10 +149,16 @@ const TOOLS = [
   },
   {
     name: 'discord_move_channel',
-    description: 'Verschiebt einen Kanal in eine Kategorie (leer = aus der Kategorie).',
+    description:
+      'Verschiebt einen Kanal in eine Kategorie (leer = aus der Kategorie) und/oder an eine Position (0 = ganz oben).',
     inputSchema: {
       type: 'object',
-      properties: { channel: { type: 'string' }, category: { type: 'string' }, guild_id: { type: 'string' } },
+      properties: {
+        channel: { type: 'string' },
+        category: { type: 'string' },
+        position: { type: 'number', description: '0 = ganz oben' },
+        guild_id: { type: 'string' },
+      },
       required: ['channel'],
       additionalProperties: false,
     },
@@ -505,8 +511,11 @@ async function callTool(name, args = {}) {
         parentId = parent.id;
         parentName = parent.name;
       }
-      await api(`/channels/${ch.id}`, { method: 'PATCH', body: { parent_id: parentId } });
-      return `Verschoben: ${ch.name} -> ${parentName}`;
+      const patch = {};
+      if (args.category !== undefined) patch.parent_id = parentId;
+      if (args.position !== undefined) patch.position = args.position;
+      await api(`/channels/${ch.id}`, { method: 'PATCH', body: patch });
+      return `Verschoben: ${ch.name} -> ${parentName}${args.position !== undefined ? ` (pos ${args.position})` : ''}`;
     }
 
     case 'discord_delete_channel': {
