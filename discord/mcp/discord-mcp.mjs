@@ -111,6 +111,7 @@ const TOOLS = [
         topic: { type: 'string' },
         read_only: { type: 'boolean' },
         private: { type: 'boolean' },
+        verified_only: { type: 'boolean', description: 'Nur Verified (und Staff) sehen den Kanal' },
         slowmode: { type: 'number' },
         guild_id: { type: 'string' },
       },
@@ -388,8 +389,22 @@ async function callTool(name, args = {}) {
       const overwrites = [];
       const everyone = guildId; // @everyone traegt die server-id als rollen-id
       const staff = await staffRoleIds(guildId);
+      const roles = await api(`/guilds/${guildId}/roles`);
+      const verified = roles.find((r) => r.name === 'Verified');
+
       if (args.private) {
         overwrites.push({ id: everyone, type: 0, deny: bits(F.ViewChannel) });
+        for (const id of staff) overwrites.push({ id, type: 0, allow: bits(F.ViewChannel, F.SendMessages, F.ReadMessageHistory) });
+      } else if (args.verified_only) {
+        overwrites.push({ id: everyone, type: 0, deny: bits(F.ViewChannel) });
+        if (verified) {
+          overwrites.push({
+            id: verified.id,
+            type: 0,
+            allow: bits(F.ViewChannel, F.ReadMessageHistory),
+            deny: args.read_only ? bits(F.SendMessages) : undefined,
+          });
+        }
         for (const id of staff) overwrites.push({ id, type: 0, allow: bits(F.ViewChannel, F.SendMessages, F.ReadMessageHistory) });
       } else if (args.read_only) {
         overwrites.push({ id: everyone, type: 0, allow: bits(F.ViewChannel, F.ReadMessageHistory), deny: bits(F.SendMessages) });
