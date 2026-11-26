@@ -27,6 +27,16 @@ mitgepflegt:
 
 Alles auf Englisch, Kanaele sind read-only (Post per Bot).
 
+## Versionierung (wichtig)
+
+- Version **+0.1 nur bei neuen Features** (neuer Toggle, neuer Slider, neue
+  Funktion, die es vorher nicht gab).
+- **Verbesserungen an bestehenden Features (Bugfix, Feintuning, schneller,
+  stabiler) = KEIN Versionsbump.** Dann bleibt die Version gleich und der
+  Update-Post traegt die aktuelle Version.
+- Bei jedem Update trotzdem `#🛠・updates` posten und im `CHANGELOG` in
+  `src/source.lua` ergaenzen (unter der aktuellen Version).
+
 Zusaetzlich:
 
 - **News vom Nutzer** (Ankuendigungen, free/paid, Events) -> sofort nach
