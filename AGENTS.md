@@ -21,9 +21,12 @@ mitgepflegt:
    Kurz, Englisch, nur echte Aenderungen.
 3. **`#❗・announcement`** nur fuer allgemeine Neuigkeiten (free/paid, Events,
    grosse Ankuendigungen) - **keine** Script-Updates.
-4. **`#ℹ️・info`** aktualisieren, wenn sich Version, Executor-Support oder der
-   Anti-Cheat-Bypass (Adonis) aendert. Die **Version steht nur hier** (und im
-   `CHANGELOG` in `src/source.lua`), niemals im Update-Post.
+4. **`#ℹ️・info`** aktualisieren, wenn sich Executor-Support oder der
+   Anti-Cheat-Bypass (Adonis) aendert.
+
+**Versionsnummer steht NIRGENDS in Discord** - weder im Update-Post noch in
+`#info` noch sonst wo. Sie existiert nur im `CHANGELOG` in `src/source.lua`
+(News-Fenster im Script).
 
 Alles auf Englisch, Kanaele sind read-only (Post per Bot).
 

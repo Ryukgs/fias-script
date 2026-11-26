@@ -21,8 +21,8 @@ Wenn das Script geupdated wird, wird Discord **immer** mitgepflegt:
   ohne Versionsnummer - nur was neu/verbessert ist
 
 - `#❗・announcement` -> nur allgemeine Neuigkeiten, keine Script-Updates
-- `#ℹ️・info` -> Version, erlaubter Executor (nur Madium), Anti-Cheat-Bypass (Adonis)
-  aktualisieren, wenn sich was aendert
+- `#ℹ️・info` -> Executor-Support, Anti-Cheat-Bypass (Adonis) aktualisieren
+  (keine Versionsnummer)
 
 ## Versionierung
 
