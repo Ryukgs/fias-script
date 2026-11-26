@@ -699,4 +699,4 @@ rl.on('line', (line) => {
     });
 });
 
-log('ready', TOKEN ? '(token gesetzt)' : '(kein token)');
+log('ready', token() ? '(token gesetzt)' : '(kein token)');
