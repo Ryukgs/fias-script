@@ -9,7 +9,25 @@ und (nach Rückfrage) löschen.
 1. **Bot-Token** — Developer Portal, deine App, Bot -> Reset Token.
 2. **Deine User-ID** — Discord -> Entwicklermodus an -> Rechtsklick auf dich -> ID kopieren.
 3. **Server-ID** — Rechtsklick auf den Server -> ID kopieren.
-4. **API-Key** — https://freebuff.com/account/api (Account -> Developer API).
+4. **API-Key** — gratis bei z.ai (siehe unten), kein Guthaben noetig.
+
+## Gratis-Key statt Credits
+
+1. Auf **z.ai** registrieren.
+2. Dort einen **API Key** erstellen und kopieren.
+3. In der `.env` so eintragen:
+
+```
+OPENAI_API_KEY=dein_zai_key
+OPENAI_BASE_URL=https://api.z.ai/api/paas/v4
+OPENAI_MODEL=glm-4-flash
+```
+
+`glm-4-flash` ist das kostenlose Modell. Reicht fuer Kanal- und Rollen-Bau.
+Wenn du spaeter ein staerkeres Modell willst, nur `OPENAI_MODEL` aendern.
+
+**Alternative mit Credits:** https://freebuff.com/account/api
+(`OPENAI_BASE_URL=https://freebuff.com/api/v1/paid`, `OPENAI_MODEL=gpt-4o-mini`).
 
 ## 1. Message Content Intent an
 
@@ -69,6 +87,6 @@ Der Bot antwortet mit einer kurzen Liste, was er angelegt hat.
 | --- | --- |
 | `missing env: ...` | `.env` unvollständig oder `--env-file` vergessen |
 | `api 401` | API-Key falsch |
-| `api 404` | `OPENAI_MODEL` oder `OPENAI_BASE_URL` falsch |
+| `api 404` | `OPENAI_MODEL` oder `OPENAI_BASE_URL` falsch (z.ai: `.../paas/v4` + `glm-4-flash`) |
 | Bot antwortet nicht | Message Content Intent aus, oder falscher Kanal |
 | `Missing Permissions` | Bot braucht Administrator |
