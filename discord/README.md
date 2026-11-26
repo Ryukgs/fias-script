@@ -17,7 +17,21 @@ Discord erlaubt keiner App, einen Server fuer dich zu erstellen, das ist der ein
 
 ## 3. Script ausfuehren
 
-Im Ordner `discord/`:
+**Einfachster Weg — eine Datei, kein npm:**
+
+```powershell
+Invoke-WebRequest "https://raw.githubusercontent.com/Ryukgs/fias-script/main/discord/setup-standalone.mjs" -OutFile setup.mjs
+$env:DISCORD_TOKEN="dein_token"
+node setup.mjs <server_id>
+```
+
+Erst schauen, was passieren wuerde (ohne Token, ohne Server):
+
+```powershell
+node setup.mjs <server_id> --dry
+```
+
+**Alternativ mit discord.js:**
 
 ```bash
 npm install
@@ -26,6 +40,10 @@ DISCORD_TOKEN=dein_token node setup.mjs <server_id>
 
 Die Server-ID: Discord -> Einstellungen -> Erweitert -> Entwicklermodus an,
 dann Rechtsklick auf den Server -> **Server-ID kopieren**.
+
+Wichtig: den Ordner `discord/` gibt es nur im Repo. Wenn `cd discord` fehlschlaegt,
+bist du im falschen Ordner (z. B. im Discord-Installationsordner).
+Nimm den Pfad, in den du das Repo entpackt hast, oder den Ein-Datei-Weg oben.
 
 ## Was danach noch per Hand kommt
 
