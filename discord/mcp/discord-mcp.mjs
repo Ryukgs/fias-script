@@ -332,6 +332,20 @@ const TOOLS = [
     },
   },
   {
+    name: 'discord_reorder_channels',
+    description:
+      'Setzt die Reihenfolge der Kanaele in einem Rutsch (von oben nach unten). order ist eine Liste von Kanalnamen oder IDs.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        order: { type: 'array', items: { type: 'string' } },
+        guild_id: { type: 'string' },
+      },
+      required: ['order'],
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'discord_set_overwrites',
     description:
       'Setzt die Kanalrechte fuer eine Rolle. allow/deny sind Listen von Rechte-Namen (z. B. ViewChannel). role kann auch @everyone sein. Der Overwrite ersetzt den bisherigen dieser Rolle.',
@@ -556,6 +570,27 @@ async function callTool(name, args = {}) {
       if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
       await api(`/channels/${ch.id}/messages/${args.message_id}`, { method: 'DELETE' });
       return `Nachricht geloescht (${args.message_id})`;
+    }
+
+    case 'discord_reorder_channels': {
+      const all = await api(`/guilds/${guildId}/channels`);
+      const ids = [];
+      for (const ref of args.order) {
+        const clean = String(ref).replace(/^#/, '').toLowerCase();
+        const ch = all.find((c) => c.id === clean) ?? all.find((c) => c.name.toLowerCase() === clean);
+        if (!ch) throw new Error(`Kanal nicht gefunden: ${ref}`);
+        ids.push(ch.id);
+      }
+      // Genannte Kanaele nach oben, alle anderen in ihrer bisherigen Ordnung dahinter.
+      const rest = all
+        .filter((c) => !ids.includes(c.id))
+        .sort((a, b) => a.position - b.position);
+      const ordered = [...ids.map((id) => all.find((c) => c.id === id)), ...rest];
+      await api(`/guilds/${guildId}/channels`, {
+        method: 'PATCH',
+        body: ordered.map((c, index) => ({ id: c.id, position: index })),
+      });
+      return `Reihenfolge gesetzt: ${ordered.map((c) => c.name).join(' | ')}`;
     }
 
     case 'discord_set_overwrites': {
