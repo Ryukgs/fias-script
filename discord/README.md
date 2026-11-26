@@ -35,11 +35,11 @@ auf den Server -> **Server-ID kopieren**.
 ### Alte Kanaele ersetzen
 
 Wenn schon ein Satz ohne Emoji im Server liegt (announcements, rules, general,
-staff-chat ...), einmal mit `--reset` laufen lassen. Entfernt nur diese alten
-Kanaele und nur, wenn sie leer sind:
+staff-chat ...), einmal mit `--reset` laufen lassen. Alte Kanaele mit Nachrichten
+bleiben standardmaessig stehen; mit `--force` werden sie auch entfernt:
 
 ```powershell
-node setup.mjs <server_id> --reset
+node setup.mjs <server_id> --reset --force
 ```
 
 ## Aufbau

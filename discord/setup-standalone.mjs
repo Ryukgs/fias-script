@@ -18,6 +18,7 @@ const API = 'https://discord.com/api/v10';
 const args = process.argv.slice(2);
 const dry = args.includes('--dry');
 const reset = args.includes('--reset');
+const force = args.includes('--force');
 const guildId = args.find((a) => /^\d{15,25}$/.test(a));
 const token = process.env.DISCORD_TOKEN;
 
@@ -237,7 +238,7 @@ function printPlan() {
   }
   console.log('');
   console.log(`${ROLES.length} roles, ${LAYOUT.reduce((n, g) => n + g.channels.length, 0)} channels, no messages`);
-  if (reset) console.log('reset: legacy channels without emoji are removed first (empty ones only)');
+  if (reset) console.log(`reset: legacy channels without emoji are removed first${force ? ' (even with messages)' : ' (empty ones only)'}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -253,10 +254,10 @@ async function removeLegacy() {
   for (const ch of all) {
     if (ch.type === 4) continue;
     if (!LEGACY.channels.includes(ch.name)) continue;
-    if (ch.type === 0) {
+    if (ch.type === 0 && !force) {
       const msgs = await api(`/channels/${ch.id}/messages?limit=1`).catch(() => []);
       if (Array.isArray(msgs) && msgs.length > 0) {
-        console.log(`  ~ keep     ${ch.name} (has messages)`);
+        console.log(`  ~ keep     ${ch.name} (has messages, use --force)`);
         continue;
       }
     }
