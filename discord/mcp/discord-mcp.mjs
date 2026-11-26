@@ -325,6 +325,40 @@ const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: 'discord_set_overwrites',
+    description:
+      'Setzt die Kanalrechte fuer eine Rolle. allow/deny sind Listen von Rechte-Namen (z. B. ViewChannel). role kann auch @everyone sein. Der Overwrite ersetzt den bisherigen dieser Rolle.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        channel: { type: 'string' },
+        role: { type: 'string' },
+        allow: { type: 'array', items: { type: 'string' } },
+        deny: { type: 'array', items: { type: 'string' } },
+        guild_id: { type: 'string' },
+      },
+      required: ['channel', 'role'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'discord_edit_channel',
+    description: 'Aendert Topic, Slowmode, NSFW-Flag oder Namen eines Kanals.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        channel: { type: 'string' },
+        name: { type: 'string' },
+        topic: { type: 'string' },
+        slowmode: { type: 'number' },
+        nsfw: { type: 'boolean' },
+        guild_id: { type: 'string' },
+      },
+      required: ['channel'],
+      additionalProperties: false,
+    },
+  },
 ];
 
 const F = {
@@ -513,6 +547,38 @@ async function callTool(name, args = {}) {
       if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
       await api(`/channels/${ch.id}/messages/${args.message_id}`, { method: 'DELETE' });
       return `Nachricht geloescht (${args.message_id})`;
+    }
+
+    case 'discord_set_overwrites': {
+      const ch = await findChannel(guildId, args.channel);
+      if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
+      let roleId;
+      if (String(args.role).trim().replace(/^@/, '').toLowerCase() === 'everyone') {
+        roleId = guildId;
+      } else {
+        const role = await findRole(guildId, args.role);
+        if (!role) throw new Error(`Rolle nicht gefunden: ${args.role}`);
+        roleId = role.id;
+      }
+      const allow = permsToBits(args.allow ?? []);
+      const deny = permsToBits(args.deny ?? []);
+      await api(`/channels/${ch.id}/permissions/${roleId}`, {
+        method: 'PUT',
+        body: { allow, deny, type: 0 },
+      });
+      return `Rechte gesetzt: #${ch.name} -> ${args.role} (allow ${allow}, deny ${deny})`;
+    }
+
+    case 'discord_edit_channel': {
+      const ch = await findChannel(guildId, args.channel);
+      if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
+      const body = {};
+      if (args.name) body.name = args.name;
+      if (args.topic !== undefined) body.topic = args.topic;
+      if (args.slowmode !== undefined) body.rate_limit_per_user = args.slowmode;
+      if (args.nsfw !== undefined) body.nsfw = args.nsfw;
+      const updated = await api(`/channels/${ch.id}`, { method: 'PATCH', body });
+      return `Kanal geaendert: #${updated.name} (${updated.id})`;
     }
 
     case 'discord_list_roles': {
