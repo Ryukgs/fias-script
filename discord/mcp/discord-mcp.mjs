@@ -411,6 +411,7 @@ const PERMS = {
   Connect: 1048576n, Speak: 2097152n, MuteMembers: 4194304n, DeafenMembers: 8388608n,
   MoveMembers: 16777216n, UseVAD: 33554432n, ChangeNickname: 67108864n, ManageNicknames: 134217728n,
   ManageRoles: 268435456n, ManageWebhooks: 536870912n, ManageEmojisAndStickers: 1073741824n,
+  UseExternalStickers: 137438953472n,
   ManageGuildExpressions: 1073741824n, UseApplicationCommands: 2147483648n, ManageEvents: 8589934592n,
   ModerateMembers: 1099511627776n, CreatePublicThreads: 34359738368n, CreatePrivateThreads: 68719476736n,
   SendMessagesInThreads: 274877906944n,
