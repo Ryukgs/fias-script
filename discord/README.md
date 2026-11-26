@@ -12,12 +12,13 @@ Wenn das Script geupdated wird, wird Discord **immer** mitgepflegt:
 - `#🛠・updates` -> Post im Format:
 
   ```
-  @everyone
   new update
 
   - ...
   - ...
   ```
+
+  `@everyone` nur bei grossen/wichtigen Updates - kleine Fixes ohne Ping
 
   ohne Versionsnummer - nur was neu/verbessert ist
 
