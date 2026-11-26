@@ -3,3 +3,7 @@ src/
 tools/__pycache__/
 *.pyc
 tools/
+
+# discord setup
+node_modules/
+discord/.env
