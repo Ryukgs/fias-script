@@ -9,3 +9,4 @@ node_modules/
 .env
 discord/.env
 discord/agent/.env
+keys/.secret/
