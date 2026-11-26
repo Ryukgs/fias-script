@@ -361,6 +361,23 @@ async function run() {
         console.log(`  = channel  ${spec.name}`);
         continue;
       }
+
+      // Announcement war beim ersten Lauf noch nicht moeglich (Community aus).
+      // Wenn der Kanal als Text existiert und Community jetzt an ist: umstellen.
+      if (type === 5) {
+        const asText = existing.find((c) => c.name === spec.name && c.type === 0);
+        if (asText) {
+          try {
+            await api(`/channels/${asText.id}`, { method: 'PATCH', body: { type: 5 } });
+            kept.push(`channel ${spec.name}`);
+            console.log(`  ^ upgrade  ${spec.name} (text -> announcement)`);
+            await sleep(160);
+            continue;
+          } catch (err) {
+            console.log(`  ! upgrade  ${spec.name}: ${err.message}`);
+          }
+        }
+      }
       const body = {
         name: spec.name,
         type,
