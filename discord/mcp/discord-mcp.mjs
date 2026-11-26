@@ -173,6 +173,110 @@ const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: 'discord_list_roles',
+    description: 'Alle Rollen eines Servers mit Rechten und Position.',
+    inputSchema: {
+      type: 'object',
+      properties: { guild_id: { type: 'string' } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'discord_create_role_full',
+    description: 'Legt eine Rolle mit Rechten an (permissions als Liste von Namen, z. B. ["ViewChannel","SendMessages"]).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        color: { type: 'string' },
+        hoist: { type: 'boolean' },
+        mentionable: { type: 'boolean' },
+        permissions: { type: 'array', items: { type: 'string' } },
+        guild_id: { type: 'string' },
+      },
+      required: ['name'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'discord_edit_role',
+    description: 'Aendert Name, Farbe oder Rechte einer Rolle (permissions als Liste von Namen).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        role: { type: 'string', description: 'Rollen-Name oder ID' },
+        name: { type: 'string' },
+        color: { type: 'string' },
+        hoist: { type: 'boolean' },
+        permissions: { type: 'array', items: { type: 'string' } },
+        guild_id: { type: 'string' },
+      },
+      required: ['role'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'discord_delete_role',
+    description: 'Loescht eine Rolle (Name oder ID).',
+    inputSchema: {
+      type: 'object',
+      properties: { role: { type: 'string' }, guild_id: { type: 'string' } },
+      required: ['role'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'discord_create_automod_rule',
+    description: 'Legt eine AutoMod-Regel an. trigger: keyword | spam | mentions | preset. preset 1=profanity 2=sexual 3=slurs.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        trigger: { type: 'string', enum: ['keyword', 'spam', 'mentions', 'preset'] },
+        keywords: { type: 'array', items: { type: 'string' } },
+        presets: { type: 'array', items: { type: 'number' } },
+        mention_limit: { type: 'number' },
+        alert_channel: { type: 'string' },
+        timeout_seconds: { type: 'number', description: '0 = kein Timeout' },
+        guild_id: { type: 'string' },
+      },
+      required: ['name', 'trigger'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'discord_list_automod_rules',
+    description: 'Listet die AutoMod-Regeln des Servers.',
+    inputSchema: {
+      type: 'object',
+      properties: { guild_id: { type: 'string' } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'discord_set_guild_security',
+    description: 'Setzt Verifizierungsstufe und Medienfilter. verification_level: none|low|medium|high|highest, content_filter: disabled|members_without_roles|all_members.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        verification_level: { type: 'string', enum: ['none', 'low', 'medium', 'high', 'highest'] },
+        content_filter: { type: 'string', enum: ['disabled', 'members_without_roles', 'all_members'] },
+        guild_id: { type: 'string' },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'discord_create_template',
+    description: 'Erstellt ein Server-Template als Backup des aktuellen Aufbaus.',
+    inputSchema: {
+      type: 'object',
+      properties: { name: { type: 'string' }, description: { type: 'string' }, guild_id: { type: 'string' } },
+      required: ['name'],
+      additionalProperties: false,
+    },
+  },
 ];
 
 const F = {
@@ -181,6 +285,40 @@ const F = {
   ReadMessageHistory: 65536n,
 };
 const bits = (...list) => list.reduce((a, b) => a | b, 0n).toString();
+
+const PERMS = {
+  CreateInstantInvite: 1n, KickMembers: 2n, BanMembers: 4n, Administrator: 8n, ManageChannels: 16n,
+  ManageGuild: 32n, AddReactions: 64n, ViewAuditLog: 128n, PrioritySpeaker: 256n, Stream: 512n,
+  ViewChannel: 1024n, SendMessages: 2048n, ManageMessages: 8192n, EmbedLinks: 16384n,
+  AttachFiles: 32768n, ReadMessageHistory: 65536n, MentionEveryone: 131072n, UseExternalEmojis: 262144n,
+  Connect: 1048576n, Speak: 2097152n, MuteMembers: 4194304n, DeafenMembers: 8388608n,
+  MoveMembers: 16777216n, UseVAD: 33554432n, ChangeNickname: 67108864n, ManageNicknames: 134217728n,
+  ManageRoles: 268435456n, ManageWebhooks: 536870912n, ManageEmojisAndStickers: 1073741824n,
+  ManageGuildExpressions: 1073741824n, UseApplicationCommands: 2147483648n, ManageEvents: 8589934592n,
+  ModerateMembers: 1099511627776n, CreatePublicThreads: 34359738368n, CreatePrivateThreads: 68719476736n,
+  SendMessagesInThreads: 274877906944n,
+};
+
+function permsToBits(names) {
+  let out = 0n;
+  for (const name of names) {
+    const bit = PERMS[name];
+    if (bit === undefined) throw new Error(`unbekannte permission: ${name}`);
+    out |= bit;
+  }
+  return out.toString();
+}
+
+async function findRole(guildId, ref) {
+  const clean = String(ref).trim().replace(/^@/, '');
+  const roles = await api(`/guilds/${guildId}/roles`);
+  const lower = clean.toLowerCase();
+  return (
+    roles.find((r) => r.id === clean) ??
+    roles.find((r) => r.name.toLowerCase() === lower) ??
+    null
+  );
+}
 
 async function staffRoleIds(guildId) {
   const roles = await api(`/guilds/${guildId}/roles`);
@@ -293,6 +431,121 @@ async function callTool(name, args = {}) {
       if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
       const msg = await api(`/channels/${ch.id}/messages`, { method: 'POST', body: { content: args.text } });
       return `Nachricht gesendet in #${ch.name} (${msg.id})`;
+    }
+
+    case 'discord_list_roles': {
+      const roles = await api(`/guilds/${guildId}/roles`);
+      return roles
+        .sort((a, b) => b.position - a.position)
+        .map((r) => `${r.name}  (${r.id})  pos ${r.position}  perms ${r.permissions}  hoist ${r.hoist}`)
+        .join('\n');
+    }
+
+    case 'discord_create_role_full': {
+      const perms = permsToBits(args.permissions ?? []);
+      const color = args.color ? Number.parseInt(String(args.color).replace('#', ''), 16) : undefined;
+      const role = await api(`/guilds/${guildId}/roles`, {
+        method: 'POST',
+        body: {
+          name: args.name,
+          color,
+          hoist: args.hoist ?? false,
+          mentionable: args.mentionable ?? false,
+          permissions: perms,
+        },
+      });
+      return `Rolle angelegt: ${role.name} (${role.id}) perms ${role.permissions}`;
+    }
+
+    case 'discord_edit_role': {
+      const role = await findRole(guildId, args.role);
+      if (!role) throw new Error(`Rolle nicht gefunden: ${args.role}`);
+      const body = {};
+      if (args.name) body.name = args.name;
+      if (args.color) body.color = Number.parseInt(String(args.color).replace('#', ''), 16);
+      if (args.hoist !== undefined) body.hoist = args.hoist;
+      if (args.permissions) body.permissions = permsToBits(args.permissions);
+      const updated = await api(`/guilds/${guildId}/roles/${role.id}`, { method: 'PATCH', body });
+      return `Rolle geaendert: ${updated.name} (${updated.id}) perms ${updated.permissions}`;
+    }
+
+    case 'discord_delete_role': {
+      const role = await findRole(guildId, args.role);
+      if (!role) throw new Error(`Rolle nicht gefunden: ${args.role}`);
+      await api(`/guilds/${guildId}/roles/${role.id}`, { method: 'DELETE' });
+      return `Rolle geloescht: ${role.name}`;
+    }
+
+    case 'discord_create_automod_rule': {
+      const trigger = args.trigger;
+      let triggerType;
+      let metadata = {};
+      if (trigger === 'keyword') {
+        triggerType = 1;
+        metadata = { keyword_filter: args.keywords ?? [] };
+      } else if (trigger === 'spam') {
+        triggerType = 3;
+      } else if (trigger === 'mentions') {
+        triggerType = 5;
+        metadata = { mention_total_limit: args.mention_limit ?? 6 };
+      } else if (trigger === 'preset') {
+        triggerType = 4;
+        metadata = { presets: args.presets ?? [1] };
+      } else {
+        throw new Error(`unbekannter trigger: ${trigger}`);
+      }
+
+      const actions = [{ type: 1 }];
+      if (args.alert_channel) {
+        const ch = await findChannel(guildId, args.alert_channel);
+        if (ch) actions.push({ type: 2, metadata: { channel_id: ch.id } });
+      }
+      if (args.timeout_seconds && args.timeout_seconds > 0) {
+        actions.push({ type: 3, metadata: { duration_seconds: args.timeout_seconds } });
+      }
+
+      const rule = await api(`/guilds/${guildId}/auto-moderation/rules`, {
+        method: 'POST',
+        body: {
+          name: args.name,
+          event_type: 1,
+          trigger_type: triggerType,
+          trigger_metadata: metadata,
+          actions,
+          enabled: true,
+        },
+      });
+      return `AutoMod-Regel angelegt: ${rule.name} (${rule.id})`;
+    }
+
+    case 'discord_list_automod_rules': {
+      const rules = await api(`/guilds/${guildId}/auto-moderation/rules`);
+      if (!rules.length) return 'keine Regeln';
+      return rules.map((r) => `${r.name} (${r.id}) trigger ${r.trigger_type} enabled ${r.enabled}`).join('\n');
+    }
+
+    case 'discord_set_guild_security': {
+      const levels = { none: 0, low: 1, medium: 2, high: 3, highest: 4 };
+      const filters = { disabled: 0, members_without_roles: 1, all_members: 2 };
+      const body = {};
+      if (args.verification_level) {
+        if (!(args.verification_level in levels)) throw new Error('verification_level ungueltig');
+        body.verification_level = levels[args.verification_level];
+      }
+      if (args.content_filter) {
+        if (!(args.content_filter in filters)) throw new Error('content_filter ungueltig');
+        body.explicit_content_filter = filters[args.content_filter];
+      }
+      const guild = await api(`/guilds/${guildId}`, { method: 'PATCH', body });
+      return `gesetzt: verification ${guild.verification_level}, filter ${guild.explicit_content_filter}`;
+    }
+
+    case 'discord_create_template': {
+      const t = await api(`/guilds/${guildId}/templates`, {
+        method: 'POST',
+        body: { name: args.name, description: args.description ?? '' },
+      });
+      return `Template: https://discord.new/${t.code}`;
     }
 
     default:
