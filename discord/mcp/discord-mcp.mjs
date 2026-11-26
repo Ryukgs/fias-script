@@ -332,6 +332,21 @@ const TOOLS = [
     },
   },
   {
+    name: 'discord_move_role',
+    description:
+      'Verschiebt eine Rolle in der Hierarchie. position 1 = direkt unter @everyone-hoechste... 0 = ganz unten.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        role: { type: 'string' },
+        position: { type: 'number' },
+        guild_id: { type: 'string' },
+      },
+      required: ['role', 'position'],
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'discord_forum_tags',
     description:
       'Setzt Tags an einen Forum-Kanal (z. B. feature / bug / change). Bestehende Tags bleiben.',
@@ -593,6 +608,19 @@ async function callTool(name, args = {}) {
       if (!ch) throw new Error(`Kanal nicht gefunden: ${args.channel}`);
       await api(`/channels/${ch.id}/messages/${args.message_id}`, { method: 'DELETE' });
       return `Nachricht geloescht (${args.message_id})`;
+    }
+
+    case 'discord_move_role': {
+      const role = await findRole(guildId, args.role);
+      if (!role) throw new Error(`Rolle nicht gefunden: ${args.role}`);
+      const pos = Math.max(0, Math.trunc(Number(args.position) || 0));
+      await api(`/guilds/${guildId}/roles`, {
+        method: 'PATCH',
+        body: [{ id: role.id, position: pos }],
+      });
+      const after = await api(`/guilds/${guildId}/roles`);
+      const list = after.sort((a, b) => b.position - a.position).map((r) => r.name + ':' + r.position).join(' | ');
+      return `Rolle ${role.name} -> position ${pos}\n${list}`;
     }
 
     case 'discord_forum_tags': {
