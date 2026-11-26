@@ -21,7 +21,6 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const {
-  DISCORD_TOKEN,
   DISCORD_GUILD_ID,
   VERIFY_CHANNEL = 'verify',
   VERIFY_ROLE = 'Verified',
@@ -30,14 +29,43 @@ const {
   MIN_ACCOUNT_AGE_DAYS = '7',
 } = process.env;
 
-if (!DISCORD_TOKEN || !DISCORD_GUILD_ID) {
+const here = dirname(fileURLToPath(import.meta.url));
+const statePath = join(here, 'verify-panel.json');
+
+// Token: zuerst dieselbe Datei wie der MCP (Documents/discord-token.txt),
+// sonst DISCORD_TOKEN aus der .env. Anfuehrungszeichen und ein fuehrendes
+// "Bot " werden entfernt, weil das die haeufigsten Kopierfehler sind.
+function cleanToken(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/^Bot\s+/i, '')
+    .trim();
+}
+
+function loadToken() {
+  for (const path of [join(here, '..', 'discord-token.txt'), join(here, 'discord-token.txt')]) {
+    try {
+      const raw = cleanToken(readFileSync(path, 'utf8'));
+      if (raw) {
+        console.log(`token aus ${path}`);
+        return raw;
+      }
+    } catch {
+      // Datei fehlt -> naechste Quelle
+    }
+  }
+  return cleanToken(process.env.DISCORD_TOKEN);
+}
+
+const TOKEN = loadToken();
+
+if (!TOKEN || !DISCORD_GUILD_ID) {
   console.error('missing env: DISCORD_TOKEN / DISCORD_GUILD_ID');
   process.exit(1);
 }
 
 const MIN_AGE_MS = Number(MIN_ACCOUNT_AGE_DAYS) * 24 * 60 * 60 * 1000;
-const here = dirname(fileURLToPath(import.meta.url));
-const statePath = join(here, 'verify-panel.json');
 
 // Guilds fuer die Kanaldaten, GuildMembers fuer join-Events.
 // GuildMembers ist ein privilegierter Intent: im Developer Portal unter
@@ -192,4 +220,4 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-client.login(DISCORD_TOKEN);
+client.login(TOKEN);
