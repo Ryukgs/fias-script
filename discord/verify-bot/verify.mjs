@@ -165,24 +165,71 @@ client.once(Events.ClientReady, async (c) => {
   }
 });
 
-// Join-Karte: Avatar + Anzeigename, sonst nichts.
+// Join-Karte: Avatar + Name + Profil-Infos
 client.on(Events.GuildMemberAdd, async (member) => {
   try {
     const channel = findChannel(member.guild, WELCOME_CHANNEL);
     if (!channel?.isTextBased()) return;
+
+    const created = Math.floor(member.user.createdTimestamp / 1000);
+    const name = member.displayName || member.user.username;
+
     await channel.send({
       content: `<@${member.id}>`,
       embeds: [
         {
           color: 0xffffff,
-          description: `Welcome to **ryuk hub**`,
+          description: [
+            `**Welcome to ryuk hub, ${name}**`,
+            '',
+            `You are member **#${member.guild.memberCount}**.`,
+            `Read <#1575599573060161708> and get verified in <#1575598517781794847>.`,
+          ].join('\n'),
           thumbnail: { url: member.user.displayAvatarURL({ size: 256 }) },
+          fields: [
+            { name: 'User', value: `${member.user.tag}`, inline: true },
+            { name: 'Account created', value: `<t:${created}:R>`, inline: true },
+          ],
+          footer: { text: 'ryuk hub' },
         },
       ],
       allowedMentions: { parse: ['users'] },
     });
   } catch (err) {
     console.error(`welcome fehlgeschlagen: ${err.message}`);
+  }
+});
+
+// Leave-Karte: "goodbye <name>" + Profil
+client.on(Events.GuildMemberRemove, async (member) => {
+  try {
+    const channel = findChannel(member.guild, WELCOME_CHANNEL);
+    if (!channel?.isTextBased()) return;
+
+    const name = member.displayName || member.user.username;
+    const joined = member.joinedTimestamp ? Math.floor(member.joinedTimestamp / 1000) : null;
+    const stayed = member.joinedTimestamp
+      ? Math.max(1, Math.round((Date.now() - member.joinedTimestamp) / 3600000))
+      : null;
+
+    const fields = [{ name: 'User', value: member.user.tag, inline: true }];
+    if (joined) fields.push({ name: 'Joined', value: `<t:${joined}:R>`, inline: true });
+    if (stayed !== null) fields.push({ name: 'Stayed', value: `${stayed} h`, inline: true });
+
+    await channel.send({
+      embeds: [
+        {
+          color: 0x2b2d31,
+          description: `**goodbye ${name}**\nLeft the server.`,
+          thumbnail: { url: member.user.displayAvatarURL({ size: 256 }) },
+          fields,
+          footer: { text: `Members now: ${member.guild.memberCount}` },
+        },
+      ],
+      allowedMentions: { parse: [] },
+    });
+  } catch (err) {
+    console.error(`goodbye fehlgeschlagen: ${err.message}`);
   }
 });
 
