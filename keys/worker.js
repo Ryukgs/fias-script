@@ -63,6 +63,10 @@ h1{margin:0;font-family:"Didot","Bodoni MT","Times New Roman",Georgia,serif;font
 .note{margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07);
   font-size:11.5px;line-height:1.7;color:#66667a}
 .note b{color:#9a9aab;font-weight:500}
+.lead{margin:0 0 20px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.07);
+  font:400 clamp(16px,1.7vw,19px)/1.4 "Didot","Bodoni MT","Times New Roman",Georgia,serif;
+  color:#f2f2f4;letter-spacing:.01em}
+.lead em{font-style:normal;color:#7f7f92}
 @media (prefers-reduced-motion:reduce){.glow{animation:none}.card{animation:none}}`;
 
 const BG = '<div class="glow a"></div><div class="glow b"></div><div class="grain"></div>';
@@ -107,6 +111,7 @@ export default {
   async fetch(request) {
     const card =
       '<div class="card">' +
+      '<div class="lead">thanks for waiting — <em>here\'s the code.</em></div>' +
       '<div class="step"><span class="num">1</span><div><div class="k">copy the code</div>' +
       '<div class="v">everything in the box below</div></div></div>' +
       '<div class="step"><span class="num">2</span><div><div class="k">paste it into your executor</div>' +
