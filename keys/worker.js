@@ -151,91 +151,23 @@ function fmt(ms) {
   return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
 }
 
-const STYLE = `*{box-sizing:border-box}
-:root{color-scheme:dark}
-body{background:#0a0a0d;color:#ededf2;font:15px/1.6 "Inter","Segoe UI",system-ui,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center;padding:28px}
-.card{width:430px;max-width:100%;background:#101015;border:1px solid #1d1d24;border-radius:14px;padding:30px 28px 24px}
-.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
-.word{font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#c9c9d4}
-.tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8f8fa2;border:1px solid #26262f;border-radius:999px;padding:4px 9px}
-h1{font-size:22px;font-weight:600;letter-spacing:-.02em;margin:0 0 8px}
-p{margin:0 0 22px;color:#8b8b9b;font-size:13.5px}
-label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6c6c7d;margin-bottom:8px}
-input{width:100%;background:#0a0a0d;border:1px solid #22222b;border-radius:9px;color:#ededf2;padding:13px 14px;font:13px ui-monospace,SFMono-Regular,monospace;outline:none;transition:border-color .15s}
-input:focus{border-color:#3f3f50}
-input::placeholder{color:#4d4d5c}
-button{width:100%;margin-top:14px;background:#ededf2;color:#0a0a0d;border:0;border-radius:9px;padding:13px;font-size:13.5px;font-weight:600;letter-spacing:.02em;cursor:pointer;transition:opacity .15s}
-button:hover{opacity:.88}
-.facts{display:flex;justify-content:space-between;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid #191920;font-size:11.5px;color:#66667a;letter-spacing:.02em}
-.key{font:16px/1.5 ui-monospace,SFMono-Regular,monospace;letter-spacing:.08em;text-align:center;background:#0a0a0d;border:1px solid #22222b;border-radius:10px;padding:18px 14px;margin:0 0 6px;user-select:all;word-break:break-all;color:#ededf2}
-.timer{margin-top:16px;padding-top:16px;border-top:1px solid #191920;display:flex;justify-content:space-between;font-size:12px;color:#66667a}
-.ok{color:#7fd9a0}.bad{color:#f08a8a}
-.big{font:600 26px/1.25 ui-monospace,SFMono-Regular,monospace;color:#ededf2;margin:2px 0 14px;letter-spacing:-.01em}
-.note{font-size:11.5px;color:#5c5c6e;margin:16px 0 0}
-footer{margin-top:22px;padding-top:16px;border-top:1px solid #191920;text-align:center;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#3f3f4d}`;
+const STYLE = `*{box-sizing:border-box}html,body{margin:0;min-height:100vh}body{background:#0a0a0d}`;
 
-function shell(inner, tag) {
+// absichtlich leer: nur der hintergrund. inhalt kommt spaeter.
+function shell() {
   return (
-    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub — free key</title><style>' +
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub</title><style>' +
     STYLE +
-    '</style></head><body><main class="card"><div class="top"><span class="word">ryuk hub</span><span class="tag">' +
-    (tag || 'free key') +
-    '</span></div>' +
-    inner +
-    '<footer>fight in a school</footer></main></body></html>'
+    '</style></head><body></body></html>'
   );
 }
 
-function formPage(token, ts, sig) {
-  return shell(
-    '<h1>Get your free key</h1>' +
-      '<p>Paste the HWID your script shows on start. The key is tied to it.</p>' +
-      '<form method="POST" action="/key?t=' + encodeURIComponent(token) + '">' +
-      '<input type="hidden" name="ts" value="' + ts + '">' +
-      '<input type="hidden" name="sig" value="' + sig + '">' +
-      '<label for="hwid">HWID</label>' +
-      '<input id="hwid" name="hwid" placeholder="A1B2-C3D4-E5F6" required autocomplete="off" spellcheck="false">' +
-      '<button type="submit">Get key</button>' +
-      '</form>' +
-      '<div class="facts"><span>2h access</span><span>2h cooldown</span><span>1 key per HWID</span></div>',
-  );
+function formPage() {
+  return shell();
 }
 
-function resultPage(res) {
-  if (res.status === 429) {
-    const secs = Math.max(0, Math.floor(res.body.cooldownLeft || 0));
-    return shell(
-      '<h1>Cooldown</h1>' +
-        '<p>Your last key ran out. This is the normal 2 hour break, nothing is broken.</p>' +
-        '<div class="big" id="timer">' +
-        fmt(secs * 1000) +
-        '</div>' +
-        '<p class="note">This page reloads itself when the cooldown is over.</p>' +
-        '<script>var s=' +
-        secs +
-        ';var t=document.getElementById("timer");setInterval(function(){s--;if(s<=0){location.reload();return}var h=Math.floor(s/3600),m=Math.floor(s%3600/60);t.textContent=(h>0?h+"h ":"")+m+"m "+(s%60)+"s"},1000);</script>',
-      'cooldown',
-    );
-  }
-  const b = res.body;
-  const left = Math.max(0, Math.floor((b.expiresAt - Date.now()) / 1000));
-  return shell(
-    '<h1>Your key</h1>' +
-      '<p>Copy it into the script. It only works on the HWID you entered.</p>' +
-      '<div class="key" id="key">' +
-      b.key +
-      '</div>' +
-      '<button type="button" id="copy">Copy key</button>' +
-      '<div class="timer"><span class="ok" id="timer">expires in ' +
-      fmt(left * 1000) +
-      '</span><span>2h session</span></div>' +
-      '<p class="note">After 2 hours the key ends. Come back here after another 2 hours for the next one.</p>' +
-      '<script>var s=' +
-      left +
-      ';var t=document.getElementById("timer");setInterval(function(){s--;if(s<0)return;var h=Math.floor(s/3600),m=Math.floor(s%3600/60);t.textContent="expires in "+(h>0?h+"h ":"")+m+"m "+(s%60)+"s"},1000);' +
-      'document.getElementById("copy").onclick=function(){navigator.clipboard.writeText(document.getElementById("key").textContent.trim());this.textContent="Copied";var b=this;setTimeout(function(){b.textContent="Copy key"},1500)};</script>',
-    'your key',
-  );
+function resultPage() {
+  return shell();
 }
 
 export default {
