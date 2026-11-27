@@ -204,6 +204,28 @@ body::after{content:"";position:fixed;inset:-20px;z-index:4;pointer-events:none;
   background:#fff;box-shadow:0 0 12px 2px rgba(255,255,255,.35);opacity:0;transition:opacity .25s ease;
   transform:translate3d(-100px,-100px,0);will-change:transform}
 body.mouse-on .cursor-dot{opacity:.9}
+/* ---------------- button ---------------- */
+.stage{position:fixed;inset:0;z-index:6;display:grid;place-items:center;pointer-events:none}
+.cta{pointer-events:auto;position:relative;overflow:hidden;
+  padding:17px 44px 17px 46px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+  color:#f4f4f7;font:500 12px/1 "Inter","Segoe UI",system-ui,sans-serif;
+  letter-spacing:.28em;text-transform:uppercase;text-indent:.28em;cursor:pointer;
+  will-change:transform;-webkit-tap-highlight-color:transparent;
+  transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .35s ease,box-shadow .45s ease,background .35s ease}
+.cta:hover{border-color:rgba(255,255,255,.38);
+  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.025));
+  box-shadow:0 0 0 1px rgba(255,255,255,.04),0 10px 40px rgba(255,255,255,.07),0 0 60px rgba(255,255,255,.05)}
+.cta:active{transform:scale(.975)}
+.cta:focus-visible{outline:none;border-color:rgba(255,255,255,.5);box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+.cta::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(105deg,rgba(255,255,255,0) 38%,rgba(255,255,255,.38) 50%,rgba(255,255,255,0) 62%);
+  transform:translate3d(-130%,0,0);transition:transform .95s cubic-bezier(.22,.7,.25,1);pointer-events:none}
+.cta:hover::before{transform:translate3d(130%,0,0)}
+.cta::after{content:"";position:absolute;inset:1px;border-radius:inherit;
+  border:1px solid rgba(255,255,255,.05);pointer-events:none}
+.cta .lbl{position:relative;z-index:1}
 @media (prefers-reduced-motion:reduce){
   .glow,.dust,.sheen{animation:none}
   .brand-row,.brand h1{transition:none}
@@ -268,12 +290,48 @@ const JS = `
 
   if(!('ontouchstart' in window)) body.classList.add('mouse-on');
 })();
+
+(function(){
+  var btn=document.querySelector('.cta');
+  if(!btn) return;
+  var tx=0, ty=0, cx=0, cy=0, active=false;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function loop(){
+    cx+=(tx-cx)*0.18; cy+=(ty-cy)*0.18;
+    btn.style.transform='translate3d('+cx.toFixed(2)+'px,'+cy.toFixed(2)+'px,0)';
+    if(Math.abs(tx-cx)>0.05||Math.abs(ty-cy)>0.05) requestAnimationFrame(loop);
+    else { active=false; btn.style.transform='translate3d(0,0,0)'; }
+  }
+
+  function magnet(e){
+    if(reduce) return;
+    var r=btn.getBoundingClientRect();
+    var dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
+    var dist=Math.sqrt(dx*dx+dy*dy);
+    var radius=Math.max(190, r.width*0.9);
+    if(dist<radius){ var pull=1-dist/radius; tx=dx*0.10*pull; ty=dy*0.14*pull; }
+    else { tx=0; ty=0; }
+    if(!active){ active=true; requestAnimationFrame(loop); }
+  }
+  document.addEventListener('pointermove', magnet, {passive:true});
+  document.addEventListener('mousemove', magnet, {passive:true});
+
+  btn.addEventListener('click', function(ev){
+    ev.preventDefault();
+    if(reduce) return;
+    var base=btn.style.transform||'translate3d(0,0,0)';
+    btn.animate([{transform:base+' scale(1)'},{transform:base+' scale(.955)'},{transform:base+' scale(1)'}],
+      {duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
+  });
+})();
 `;
 
 const BG = '<div class="glow a"></div><div class="glow b"></div><div class="glow c"></div>' +
   '<div class="dust"></div><div class="grain2"></div><div class="sheen"></div>' +
   '<header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div>' +
-  '<div class="sub">fight in a school</div></header>';
+  '<div class="sub">fight in a school</div></header>' +
+  '<div class="stage"><button class="cta" type="button" aria-label="Get the key"><span class="lbl">Get the key</span></button></div>';
 
 function shell() {
   return (
