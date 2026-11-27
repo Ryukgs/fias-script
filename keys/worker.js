@@ -217,35 +217,54 @@ const JS = `
   var brandRow=document.querySelector('.brand-row');
   if(!dot) return;
 
-  var R=3.5, shown=false;
+  var R=3.5, shown=false, tiltQueued=false, lastX=0, lastY=0;
 
   function place(cx, cy){
     dot.style.transform='translate3d('+(cx-R).toFixed(2)+'px,'+(cy-R).toFixed(2)+'px,0)';
-    if(!shown){ shown=true; body.classList.add('mouse-on'); }
+    if(!shown){ shown=true; if(body.classList) body.classList.add('mouse-on'); }
   }
 
-  var tiltQueued=false, lastX=0, lastY=0;
   function tilt(){
     tiltQueued=false;
     if(!brandRow) return;
-    root.style.setProperty('--px', ((lastX/window.innerWidth)-0.5).toFixed(4));
-    root.style.setProperty('--py', ((lastY/window.innerHeight)-0.5).toFixed(4));
+    root.style.setProperty('--px', ((lastX/(window.innerWidth||1))-0.5).toFixed(4));
+    root.style.setProperty('--py', ((lastY/(window.innerHeight||1))-0.5).toFixed(4));
   }
 
   function onRaw(e){
-    if(typeof e.clientX!=='number') return;
-    place(e.clientX, e.clientY);
-    lastX=e.clientX; lastY=e.clientY;
+    if(!e) return;
+    var cx, cy;
+    if(e.touches && e.touches.length){ cx=e.touches[0].clientX; cy=e.touches[0].clientY; }
+    else if(typeof e.clientX==='number'){ cx=e.clientX; cy=e.clientY; }
+    else return;
+    place(cx, cy);
+    lastX=cx; lastY=cy;
     if(!tiltQueued){ tiltQueued=true; requestAnimationFrame(tilt); }
   }
 
-  // pointerrawupdate liefert die rohen eingaben (bis 240Hz bei gaming-maeusen)
-  document.addEventListener('pointerrawupdate', onRaw, {passive:true});
-  document.addEventListener('pointermove', onRaw, {passive:true});
-  document.addEventListener('mousemove', onRaw, {passive:true});
-  document.addEventListener('touchmove', function(e){ if(e.touches[0]) onRaw(e.touches[0]); }, {passive:true});
-  document.addEventListener('touchstart', function(e){ if(e.touches[0]) onRaw(e.touches[0]); }, {passive:true});
-  document.addEventListener('mouseleave', function(){ body.classList.remove('mouse-on'); shown=false; });
+  // jeder weg wird einzeln registriert - wenn einer in einem browser fehlt,
+  // laufen die anderen trotzdem (edge/safari/feuerfuchs)
+  function on(target, type){
+    try { if(target && target.addEventListener) target.addEventListener(type, onRaw, {passive:true, capture:true}); } catch(e){}
+  }
+  on(document,'pointerrawupdate');
+  on(document,'pointermove');
+  on(window,'pointermove');
+  on(document,'mousemove');
+  on(window,'mousemove');
+  on(document,'pointerover');
+  on(document,'mouseover');
+  on(document,'pointerenter');
+  on(document,'mouseenter');
+  on(document,'pointerdown');
+  on(document,'touchmove');
+  on(document,'touchstart');
+
+  // legacy fallback: ueberschreibt nichts, wirkt aber auch ohne addEventListener
+  document.onmousemove = onRaw;
+  document.onpointermove = onRaw;
+
+  document.addEventListener('mouseleave', function(){ shown=false; if(body.classList) body.classList.remove('mouse-on'); }, true);
 
   if(!('ontouchstart' in window)) body.classList.add('mouse-on');
 })();
