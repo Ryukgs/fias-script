@@ -23,6 +23,8 @@ import { dirname, join } from 'node:path';
 const {
   DISCORD_GUILD_ID,
   VERIFY_CHANNEL = 'verify',
+  RULES_CHANNEL = 'rules',
+  RULES_ROLE = 'Rules Accepted',
   VERIFY_ROLE = 'Verified',
   LOG_CHANNEL = 'logs',
   WELCOME_CHANNEL = 'welcome',
@@ -175,6 +177,85 @@ async function ensurePanel(guild) {
   console.log(`panel gepostet in #${channel.name} (message ${msg.id})`);
 }
 
+// ---------------- rules / accept ----------------
+
+const RULES_TEXT = [
+  '**1.** Be respectful. No insults, racism, spam or advertising.',
+  '**2.** No leaking, reselling or sharing keys or the script.',
+  '**3.** No scam attempts, no fake vouches, no alt-account abuse.',
+  '**4.** Staff decisions are final. Appeals belong in a ticket.',
+  '**5.** Breaking a rule = mute, kick or ban without refund.',
+].join('\n');
+
+function rulesPayload() {
+  return {
+    embeds: [
+      {
+        title: 'Server rules',
+        description: [
+          RULES_TEXT,
+          '',
+          'Click **Accept the rules** below to unlock <#1575598517781794847>.',
+        ].join('\n'),
+        color: 0xffffff,
+        footer: { text: 'ryuk hub' },
+      },
+    ],
+    components: [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('rules_accept').setLabel('Accept the rules').setStyle(ButtonStyle.Success),
+      ),
+    ],
+  };
+}
+
+async function ensureRulesPanel(guild) {
+  const channel = findChannel(guild, RULES_CHANNEL);
+  if (!channel?.isTextBased()) {
+    console.error(`rules-kanal nicht gefunden (RULES_CHANNEL=${RULES_CHANNEL})`);
+    return;
+  }
+  try {
+    const old = await channel.messages.fetch({ limit: 50 });
+    for (const msg of old.values()) await msg.delete().catch(() => {});
+  } catch (err) {
+    console.error(`rules aufraeumen fehlgeschlagen: ${err?.message || err}`);
+  }
+  await channel.send(rulesPayload());
+  console.log(`rules-panel gepostet in #${channel.name}`);
+}
+
+async function handleRulesAccept(interaction) {
+  try {
+    const guild = interaction.guild;
+    const role = findRole(guild, RULES_ROLE);
+    if (!role) {
+      await interaction.reply({ content: 'Role "Rules Accepted" is missing. Tell an admin.', flags: MessageFlags.Ephemeral });
+      return;
+    }
+
+    if (!interaction.deferred && !interaction.replied) {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    }
+
+    if (interaction.member.roles.cache.has(role.id)) {
+      await interaction.editReply({ content: `You already accepted the rules. Head to <#1575598517781794847>.` });
+      return;
+    }
+
+    await interaction.member.roles.add(role, 'rules accepted');
+    await interaction.editReply({ content: `Rules accepted. Now open <#1575598517781794847> and verify.` });
+    console.log(`rules accepted: ${interaction.user.tag}`);
+  } catch (err) {
+    console.error(`rules accept fehlgeschlagen: ${err?.message || err}`);
+    try {
+      const text = 'Could not accept the rules. Is the bot role above "Rules Accepted"?';
+      if (interaction.deferred || interaction.replied) await interaction.editReply({ content: text });
+      else await interaction.reply({ content: text, flags: MessageFlags.Ephemeral });
+    } catch {}
+  }
+}
+
 client.once(Events.ClientReady, async (c) => {
   console.log(`eingeloggt als ${c.user.tag}`);
   try {
@@ -182,6 +263,7 @@ client.once(Events.ClientReady, async (c) => {
     await guild.roles.fetch();
     await guild.channels.fetch();
     await ensurePanel(guild);
+    await ensureRulesPanel(guild);
     console.log(`welcome-kanal: ${findWelcome(guild)?.name ?? 'NICHT GEFUNDEN'}`);
     console.log(`goodbye-kanal: ${findGoodbye(guild)?.name ?? 'NICHT GEFUNDEN'}`);
     console.log('bereit');
@@ -270,6 +352,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
   // jede interaction einmal loggen - so sieht man sofort, ob der klick ankommt
   console.log(`interaction: type=${interaction.type} id=${interaction.customId ?? '-'} user=${interaction.user?.tag ?? '?'}`);
   if (!interaction.isButton()) return;
+  if (interaction.customId === 'rules_accept') {
+    await handleRulesAccept(interaction);
+    return;
+  }
   // jeder Button im #verify-Kanal zaehlt - auch ein alter Panel-Button
   if (interaction.customId !== 'verify_accept' && interaction.channelId !== VERIFY_MSG_CHANNEL_ID) {
     console.log(`  -> fremder button (${interaction.customId}) in ${interaction.channelId}, ignoriert`);
@@ -285,6 +371,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     }
     const say = (text) => interaction.editReply({ content: text });
+
+    const rulesRole = findRole(guild, RULES_ROLE);
+    if (rulesRole && !interaction.member.roles.cache.has(rulesRole.id)) {
+      return say('Accept the rules in <#1575599573060161708> first, then come back.');
+    }
 
     const role = findRole(guild, VERIFY_ROLE);
     if (!role) return say('Verified role is missing. Tell an admin.');
