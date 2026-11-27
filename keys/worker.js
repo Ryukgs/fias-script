@@ -151,14 +151,52 @@ function fmt(ms) {
   return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
 }
 
-const STYLE = `*{box-sizing:border-box}html,body{margin:0;min-height:100vh}body{background:#0a0a0d}`;
+const STYLE = `*{box-sizing:border-box}
+html,body{margin:0;min-height:100vh}
+body{
+  background:#050506;
+  color:#f2f2f4;
+  font:15px/1.6 "Inter","Segoe UI",system-ui,sans-serif;
+  position:relative;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+/* 1. weiches licht oben + vignette an den raendern */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(75% 55% at 50% -8%, rgba(255,255,255,.085), rgba(255,255,255,0) 62%),
+    radial-gradient(45% 40% at 88% 108%, rgba(255,255,255,.05), rgba(255,255,255,0) 60%),
+    radial-gradient(38% 34% at 8% 92%, rgba(255,255,255,.035), rgba(255,255,255,0) 60%),
+    radial-gradient(120% 100% at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,.55) 78%, rgba(0,0,0,.85) 100%);
+}
+/* 2. sehr feines korn (luxus-papier look) */
+body::after{
+  content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+  opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size:160px 160px;
+}
+/* 3. haarlinien-raster + langsamer licht-sweep */
+.grain2,.sheen{position:fixed;inset:0;pointer-events:none}
+.grain2{
+  z-index:2;opacity:.022;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.9) 0 1px,transparent 1px 4px);
+}
+.sheen{
+  z-index:0;opacity:.16;
+  background:conic-gradient(from 210deg at 50% 50%,rgba(255,255,255,0) 0deg,rgba(255,255,255,.06) 60deg,rgba(255,255,255,0) 130deg,rgba(255,255,255,0) 360deg);
+  animation:sweep 44s linear infinite;
+}
+@keyframes sweep{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.sheen{animation:none}}`;
 
 // absichtlich leer: nur der hintergrund. inhalt kommt spaeter.
 function shell() {
   return (
     '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub</title><style>' +
     STYLE +
-    '</style></head><body></body></html>'
+    '</style></head><body><div class="grain2"></div><div class="sheen"></div></body></html>'
   );
 }
 
