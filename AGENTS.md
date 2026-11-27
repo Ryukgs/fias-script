@@ -6,9 +6,9 @@ Immer wenn `src/source.lua` / `loader.lua` (das Script) geaendert oder geupdatet
 wird **im selben Zug** der Discord-Server `ryuk hub` (Guild-ID `1575576191920898171`)
 mitgepflegt:
 
-1. **`#👀・features`** aktualisieren, wenn sich Funktionen geaendert haben
-   (neu, entfernt, umbenannt). Format: Liste wie im bestehenden Post.
-2. **`#🛠・updates`** einen Update-Post schreiben, Format:
+1. **`#👀・features`** bei **jedem** Script-Update aktualisieren (Liste der
+   aktuellen Funktionen, Englisch, wie im bestehenden Post).
+2. **`#🛠・updates`** bei **jedem** Script-Update einen neuen Post schreiben, Format:
 
    ```
    new update
@@ -32,7 +32,7 @@ mitgepflegt:
 
 **Versionsnummer steht NIRGENDS in Discord** - weder im Update-Post noch in
 `#info` noch sonst wo. Sie existiert nur im `CHANGELOG` in `src/source.lua`
-(News-Fenster im Script).
+(interne Historie, erscheint nirgendwo im Spiel).
 
 Alles auf Englisch, Kanaele sind read-only (Post per Bot).
 
