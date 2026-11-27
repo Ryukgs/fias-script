@@ -539,6 +539,217 @@ function resultPage(res, profile) {
   );
 }
 
+function oauthReady(env) {
+  return Boolean(env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET);
+}
+
+function readCookie(request, name) {
+  const raw = request.headers.get('cookie') || '';
+  const parts = raw.split(';');
+  for (const p of parts) {
+    const i = p.indexOf('=');
+    if (i < 0) continue;
+    if (p.slice(0, i).trim() === name) return p.slice(i + 1).trim();
+  }
+  return null;
+}
+
+function cookieHeader(name, value, maxAge) {
+  return name + '=' + value + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=' + maxAge;
+}
+
+async function signValue(env, kind, value) {
+  return (await hmac(env.KEY_SECRET, kind + ':' + value)).slice(0, 24);
+}
+
+async function tokenCookie(env, token) {
+  return token + '.' + (await signValue(env, 'rt', token));
+}
+
+async function tokenFromCookie(env, request) {
+  const raw = readCookie(request, 'rt');
+  if (!raw) return null;
+  const i = raw.lastIndexOf('.');
+  if (i < 0) return null;
+  const token = raw.slice(0, i);
+  const sig = raw.slice(i + 1);
+  if (sig !== (await signValue(env, 'rt', token))) return null;
+  if (env.CHECKPOINT_TOKEN && token !== env.CHECKPOINT_TOKEN) return null;
+  return token;
+}
+
+async function userFromCookie(env, request) {
+  const raw = readCookie(request, 'ru');
+  if (!raw) return null;
+  const i = raw.lastIndexOf('.');
+  if (i < 0) return null;
+  const id = raw.slice(0, i);
+  const sig = raw.slice(i + 1);
+  if (!/^\d{5,25}$/.test(id)) return null;
+  if (sig !== (await signValue(env, 'ru', id))) return null;
+  return id;
+}
+
+async function ensureProfileSchema(db) {
+  await db
+    .prepare(
+      'CREATE TABLE IF NOT EXISTS profiles (discord_id TEXT PRIMARY KEY, username TEXT, display_name TEXT, avatar TEXT, created_at INTEGER, updated_at INTEGER)',
+    )
+    .run();
+  try {
+    await db.prepare('ALTER TABLE profiles ADD COLUMN joined_at INTEGER').run();
+  } catch (e) {
+    // spalte existiert schon
+  }
+}
+
+async function loadProfile(env, id) {
+  try {
+    await ensureProfileSchema(env.DB);
+    return await env.DB.prepare('SELECT * FROM profiles WHERE discord_id = ?1').bind(id).first();
+  } catch (e) {
+    return null;
+  }
+}
+
+async function saveProfile(env, u, joinedAt) {
+  try {
+    await ensureProfileSchema(env.DB);
+    const avatar = u.avatar
+      ? 'https://cdn.discordapp.com/avatars/' + u.id + '/' + u.avatar + '.png?size=80'
+      : 'https://cdn.discordapp.com/embed/avatars/' + (Number(u.discriminator || 0) % 5) + '.png';
+    const created = u.id ? Number((BigInt(u.id) >> 22n) + 1420070400000n) : Date.now();
+    await env.DB.prepare(
+      'INSERT INTO profiles (discord_id, username, display_name, avatar, created_at, joined_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT(discord_id) DO UPDATE SET username=?2, display_name=?3, avatar=?4, created_at=?5, joined_at=COALESCE(?6, profiles.joined_at), updated_at=?7',
+    )
+      .bind(u.id, u.username || '', u.global_name || u.username || '', avatar, created, joinedAt || null, Date.now())
+      .run();
+    return { discord_id: u.id, username: u.username, display_name: u.global_name || u.username, avatar, created_at: created, joined_at: joinedAt || null };
+  } catch (e) {
+    return null;
+  }
+}
+
+function whoWidget(profile) {
+  if (!profile) return '';
+  let meta = '';
+  if (profile.joined_at) {
+    const days = Math.max(0, (Date.now() - profile.joined_at) / 86400000);
+    if (days < 1) meta = 'joined today';
+    else if (days < 30) meta = Math.max(1, Math.round(days)) + 'd in the server';
+    else if (days < 365) meta = Math.round(days / 30) + 'mo in the server';
+    else meta = Math.floor(days / 365) + 'y in the server';
+  } else if (profile.created_at) {
+    const years = Math.max(0, (Date.now() - profile.created_at) / (365.25 * 86400000));
+    meta = years < 1 ? Math.max(1, Math.round(years * 12)) + 'mo on Discord' : Math.floor(years) + 'y on Discord';
+  }
+  return (
+    '<div class="who">' +
+    '<img src="' + (profile.avatar || '') + '" alt="">' +
+    '<div class="txt"><b>' + escapeHtml(profile.display_name || profile.username || 'user') + '</b>' +
+    '<span>@' + escapeHtml(profile.username || 'user') +
+    (meta ? '<i class="dotsep"></i>' + meta : '') +
+    '</span></div></div>'
+  );
+}
+
+function escapeHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function fetchJoinedAt(env, userId) {
+  if (!env.DISCORD_BOT_TOKEN) return null;
+  const guild = env.DISCORD_GUILD_ID || '1575576191920898171';
+  const res = await fetch('https://discord.com/api/v10/guilds/' + guild + '/members/' + userId, {
+    headers: { authorization: 'Bot ' + env.DISCORD_BOT_TOKEN, 'user-agent': 'ryuk-hub-keys' },
+  }).catch(() => null);
+  if (!res || !res.ok) return null;
+  const m = await res.json().catch(() => null);
+  if (!m || !m.joined_at) return null;
+  const t = Date.parse(m.joined_at);
+  return Number.isFinite(t) ? t : null;
+}
+
+async function currentProfile(env, request) {
+  if (!oauthReady(env)) return null;
+  const id = await userFromCookie(env, request);
+  if (!id) return null;
+  return await loadProfile(env, id);
+}
+
+function redirectTo(path) {
+  return new Response(null, { status: 302, headers: { location: path, 'cache-control': 'no-store' } });
+}
+
+async function startDiscordAuth(request, env, url) {
+  const token = url.searchParams.get('t') || '';
+  if (!oauthReady(env) || !env.CHECKPOINT_TOKEN || token !== env.CHECKPOINT_TOKEN) {
+    return html(shell(notice('Discord login', 'Login is not available right now. Get your key from the key page in Discord.'), 'locked'), 403);
+  }
+  const state = String(Date.now());
+  const sig = (await hmac(env.KEY_SECRET, 'st:' + token + ':' + state)).slice(0, 24);
+  const u = new URL(DISCORD_AUTH_URL);
+  u.searchParams.set('client_id', env.DISCORD_CLIENT_ID);
+  u.searchParams.set('response_type', 'code');
+  u.searchParams.set('scope', 'identify');
+  u.searchParams.set('redirect_uri', url.origin + '/auth/discord/callback');
+  u.searchParams.set('state', state + '.' + sig);
+  const headers = new Headers({ location: u.toString(), 'cache-control': 'no-store' });
+  headers.append('set-cookie', cookieHeader('rt', await tokenCookie(env, token), 900));
+  return new Response(null, { status: 302, headers });
+}
+
+async function finishDiscordAuth(request, env, url) {
+  const code = url.searchParams.get('code') || '';
+  const state = url.searchParams.get('state') || '';
+  const token = await tokenFromCookie(env, request);
+  if (!token) return redirectTo('/key?skip=1');
+  const back = '/key?t=' + encodeURIComponent(token);
+  const fail = back + '&skip=1';
+  if (!code || !oauthReady(env)) return redirectTo(fail);
+
+  const dot = state.lastIndexOf('.');
+  if (dot > 0) {
+    const st = state.slice(0, dot);
+    const sig = state.slice(dot + 1);
+    const want = (await hmac(env.KEY_SECRET, 'st:' + token + ':' + st)).slice(0, 24);
+    if (sig !== want || Math.abs(Date.now() - Number(st)) > 10 * 60 * 1000) return redirectTo(fail);
+  } else {
+    return redirectTo(fail);
+  }
+
+  const body = new URLSearchParams({
+    client_id: env.DISCORD_CLIENT_ID,
+    client_secret: env.DISCORD_CLIENT_SECRET,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: url.origin + '/auth/discord/callback',
+  });
+  const res = await fetch(DISCORD_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body,
+  }).catch(() => null);
+  if (!res || !res.ok) return redirectTo(fail);
+  const tok = await res.json().catch(() => null);
+  if (!tok || !tok.access_token) return redirectTo(fail);
+
+  const me = await fetch(DISCORD_ME_URL, { headers: { authorization: 'Bearer ' + tok.access_token } }).catch(() => null);
+  if (!me || !me.ok) return redirectTo(fail);
+  const u = await me.json().catch(() => null);
+  if (!u || !u.id) return redirectTo(fail);
+
+  const joinedAt = await fetchJoinedAt(env, u.id);
+  await saveProfile(env, u, joinedAt);
+  const headers = new Headers({ location: back, 'cache-control': 'no-store' });
+  headers.append('set-cookie', cookieHeader('ru', u.id + '.' + (await signValue(env, 'ru', u.id)), 30 * 24 * 3600));
+  return new Response(null, { status: 302, headers });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
