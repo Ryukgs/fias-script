@@ -92,6 +92,17 @@ function findChannel(guild, ref) {
   );
 }
 
+// #welcome: Name ODER feste ID - so findet er den Kanal immer
+const WELCOME_CHANNEL_ID = process.env.WELCOME_CHANNEL_ID || '1575608950185918535';
+function findWelcome(guild) {
+  return (
+    guild.channels.cache.get(WELCOME_CHANNEL_ID) ??
+    findChannel(guild, WELCOME_CHANNEL) ??
+    guild.channels.cache.find((c) => c.name.toLowerCase().includes('welcome')) ??
+    null
+  );
+}
+
 function findRole(guild, ref) {
   const clean = String(ref).trim().replace(/^@/, '').toLowerCase();
   return (
@@ -159,6 +170,7 @@ client.once(Events.ClientReady, async (c) => {
     await guild.roles.fetch();
     await guild.channels.fetch();
     await ensurePanel(guild);
+    console.log(`welcome-kanal: ${findWelcome(guild)?.name ?? 'NICHT GEFUNDEN'}`);
     console.log('bereit');
   } catch (err) {
     console.error(`setup fehlgeschlagen: ${err.message}`);
@@ -167,9 +179,13 @@ client.once(Events.ClientReady, async (c) => {
 
 // Join-Karte: Avatar + Name + Profil-Infos
 client.on(Events.GuildMemberAdd, async (member) => {
+  console.log(`join: ${member.user.tag}`);
   try {
-    const channel = findChannel(member.guild, WELCOME_CHANNEL);
-    if (!channel?.isTextBased()) return;
+    const channel = findWelcome(member.guild);
+    if (!channel?.isTextBased()) {
+      console.error(`welcome-kanal nicht gefunden (WELCOME_CHANNEL=${WELCOME_CHANNEL})`);
+      return;
+    }
 
     const created = Math.floor(member.user.createdTimestamp / 1000);
     const name = member.displayName || member.user.username;
@@ -202,9 +218,13 @@ client.on(Events.GuildMemberAdd, async (member) => {
 
 // Leave-Karte: "goodbye <name>" + Profil
 client.on(Events.GuildMemberRemove, async (member) => {
+  console.log(`leave: ${member.user.tag}`);
   try {
-    const channel = findChannel(member.guild, WELCOME_CHANNEL);
-    if (!channel?.isTextBased()) return;
+    const channel = findWelcome(member.guild);
+    if (!channel?.isTextBased()) {
+      console.error(`welcome-kanal nicht gefunden (WELCOME_CHANNEL=${WELCOME_CHANNEL})`);
+      return;
+    }
 
     const name = member.displayName || member.user.username;
     const joined = member.joinedTimestamp ? Math.floor(member.joinedTimestamp / 1000) : null;
