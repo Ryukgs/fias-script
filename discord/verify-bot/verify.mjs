@@ -72,6 +72,9 @@ if (!TOKEN || !DISCORD_GUILD_ID) {
 
 const MIN_AGE_MS = Number(MIN_ACCOUNT_AGE_DAYS) * 24 * 60 * 60 * 1000;
 
+// #verify - dort zaehlt jeder Button-Klick als Verify
+const VERIFY_MSG_CHANNEL_ID = process.env.VERIFY_CHANNEL_ID || '1575598517781794847';
+
 // Guilds fuer die Kanaldaten, GuildMembers fuer join-Events.
 // GuildMembers ist ein privilegierter Intent: im Developer Portal unter
 // Bot -> Privileged Gateway Intents -> SERVER MEMBERS INTENT einschalten.
@@ -102,15 +105,21 @@ function panelPayload() {
   const embed = {
     title: 'Verification',
     description: [
-      'Read <#RULES> first.',
+      '**Server rules** — read them in <#RULES>.',
       '',
-      'Click **Verify** below to get access to the server.',
+      '**1.** Be respectful. No insults, racism, spam or advertising.',
+      '**2.** No leaking, reselling or sharing keys or the script.',
+      '**3.** No scam attempts, no fake vouches, no alt-account abuse.',
+      '**4.** Staff decisions are final. Appeals belong in a ticket.',
+      '**5.** Breaking a rule = mute, kick or ban without refund.',
+      '',
+      'Click **Accept the rules** below to unlock the server.',
       `Your account must be at least **${MIN_ACCOUNT_AGE_DAYS} days** old.`,
     ].join('\n'),
     color: 0xffffff,
   };
   const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('verify_accept').setLabel('Verify').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('verify_accept').setLabel('Accept the rules').setStyle(ButtonStyle.Success),
   );
   return { embeds: [embed], components: [row] };
 }
@@ -126,25 +135,21 @@ async function ensurePanel(guild) {
   const payload = panelPayload();
   payload.embeds[0].description = payload.embeds[0].description.replace('<#RULES>', rules ? `<#${rules.id}>` : '#rules');
 
-  let saved = null;
-  if (existsSync(statePath)) {
-    try { saved = JSON.parse(readFileSync(statePath, 'utf8')); } catch { saved = null; }
-  }
-
-  if (saved?.channelId === channel.id && saved?.messageId) {
-    try {
-      const msg = await channel.messages.fetch(saved.messageId);
-      await msg.edit(payload);
-      console.log(`panel aktualisiert in #${channel.name}`);
-      return;
-    } catch {
-      // nachricht weg -> neu posten
+  // alles alte raus - auch panels von anderen bots/apps.
+  // sonst klicken leute einen button, dessen app gar nicht laeuft ("reagiert nicht").
+  try {
+    const old = await channel.messages.fetch({ limit: 50 });
+    for (const msg of old.values()) {
+      await msg.delete().catch(() => {});
     }
+    console.log(`alte nachrichten in #${channel.name} geloescht: ${old.size}`);
+  } catch (err) {
+    console.error(`aufraeumen fehlgeschlagen: ${err?.message || err}`);
   }
 
   const msg = await channel.send(payload);
   writeFileSync(statePath, JSON.stringify({ channelId: channel.id, messageId: msg.id }, null, 2));
-  console.log(`panel gepostet in #${channel.name}`);
+  console.log(`panel gepostet in #${channel.name} (message ${msg.id})`);
 }
 
 client.once(Events.ClientReady, async (c) => {
@@ -184,10 +189,10 @@ client.on(Events.GuildMemberAdd, async (member) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   // jede interaction einmal loggen - so sieht man sofort, ob der klick ankommt
   console.log(`interaction: type=${interaction.type} id=${interaction.customId ?? '-'} user=${interaction.user?.tag ?? '?'}`);
-  if (!interaction.isButton() || interaction.customId !== 'verify_accept') {
-    if (interaction.isButton() && !interaction.deferred && !interaction.replied) {
-      console.log(`  -> fremder button (${interaction.customId}), nicht unser panel`);
-    }
+  if (!interaction.isButton()) return;
+  // jeder Button im #verify-Kanal zaehlt - auch ein alter Panel-Button
+  if (interaction.customId !== 'verify_accept' && interaction.channelId !== VERIFY_MSG_CHANNEL_ID) {
+    console.log(`  -> fremder button (${interaction.customId}) in ${interaction.channelId}, ignoriert`);
     return;
   }
 
