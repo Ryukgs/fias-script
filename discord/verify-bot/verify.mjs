@@ -2,7 +2,7 @@
 /**
  * ryuk verify bot
  *
- * Postet in #verify ein Panel mit Button. Klick = Account-Alter pruefen,
+ * Postet in #verify ein Panel (ohne Button). Rolle wird spaeter anders vergeben,
  * Rolle "Verified" geben, Log in #logs.
  *
  * Start:  node --env-file=.env verify.mjs
@@ -15,7 +15,7 @@
  *   LOG_CHANNEL             kanal fuer logs (standard: logs)
  *   MIN_ACCOUNT_AGE_DAYS    mindestalter des accounts in tagen (standard: 7)
  */
-import { Client, GatewayIntentBits, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { Client, GatewayIntentBits, Events, MessageFlags } from 'discord.js';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -130,7 +130,7 @@ function panelPayload() {
   const embed = {
     title: 'Verification',
     description: [
-      'Last step. Click **Verify** below and the whole server unlocks:',
+      'Once you are verified, the whole server unlocks:',
       '',
       '💬  chat + uploads',
       '💡  suggestions, reviews, feedback',
@@ -138,14 +138,10 @@ function panelPayload() {
       '🔊  voice calls',
       '',
       `Your account must be at least **${MIN_ACCOUNT_AGE_DAYS} days** old.`,
-      'Wrong button or something broken? Ping a staff member.',
     ].join('\n'),
     color: 0xffffff,
   };
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('verify_accept').setLabel('Verify').setStyle(ButtonStyle.Success),
-  );
-  return { embeds: [embed], components: [row] };
+  return { embeds: [embed] };
 }
 
 async function ensurePanel(guild) {
@@ -191,19 +187,10 @@ function rulesPayload() {
     embeds: [
       {
         title: 'Server rules',
-        description: [
-          RULES_TEXT,
-          '',
-          'Click **Accept the rules** below to unlock <#1575598517781794847>.',
-        ].join('\n'),
+        description: RULES_TEXT,
         color: 0xffffff,
         footer: { text: 'ryuk hub' },
       },
-    ],
-    components: [
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('rules_accept').setLabel('Accept the rules').setStyle(ButtonStyle.Success),
-      ),
     ],
   };
 }
