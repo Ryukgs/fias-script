@@ -208,6 +208,39 @@ body::after{
   background:conic-gradient(from 210deg at 50% 50%,rgba(255,255,255,0) 0deg,rgba(255,255,255,.07) 55deg,rgba(255,255,255,0) 125deg,rgba(255,255,255,0) 360deg);
   animation:sweep 52s linear infinite}
 @keyframes sweep{to{transform:rotate(360deg)}}
+/* ---------------- kopf / brand ---------------- */
+.brand{
+  position:fixed;top:0;left:0;right:0;z-index:5;
+  display:flex;flex-direction:column;align-items:center;
+  padding:clamp(26px,5vh,52px) 20px 0;
+  pointer-events:none;
+}
+.brand-row{display:flex;align-items:center;gap:clamp(14px,2.2vw,26px)}
+.rule{
+  height:1px;width:clamp(34px,7vw,96px);
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.45));
+}
+.rule.r{background:linear-gradient(270deg,rgba(255,255,255,0),rgba(255,255,255,.45))}
+.brand h1{
+  margin:0;
+  font-family:"Didot","Bodoni MT","Times New Roman",Georgia,serif;
+  font-weight:400;
+  font-size:clamp(19px,2.5vw,30px);
+  line-height:1;
+  letter-spacing:.34em;
+  text-indent:.34em;
+  text-transform:uppercase;
+  background:linear-gradient(180deg,#ffffff 0%,#e6e6ec 42%,#9a9aa8 100%);
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;
+  white-space:nowrap;
+}
+.brand .sub{
+  margin-top:clamp(10px,1.6vh,16px);
+  font-size:clamp(8px,.9vw,10px);
+  letter-spacing:.52em;text-indent:.52em;text-transform:uppercase;
+  color:#6d6d7c;
+}
 @media (prefers-reduced-motion:reduce){
   .glow,.dust,.grain2,.sheen{animation:none}
   body::after{animation:none}
@@ -215,7 +248,9 @@ body::after{
 
 // nur hintergrund - inhalt kommt spaeter
 const BG = '<div class="glow a"></div><div class="glow b"></div><div class="glow c"></div>' +
-  '<div class="dust"></div><div class="grain2"></div><div class="sheen"></div>';
+  '<div class="dust"></div><div class="grain2"></div><div class="sheen"></div>' +
+  '<header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div>' +
+  '<div class="sub">fight in a school</div></header>';
 
 function shell() {
   return (
