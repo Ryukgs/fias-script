@@ -263,6 +263,14 @@ body.mouse-on .cursor-dot{opacity:.9}
 .who span{display:block;font-size:11px;color:#7f7f92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who .dotsep{width:3px;height:3px;border-radius:50%;background:#3f3f4d;margin:0 6px;display:inline-block;vertical-align:middle}
 @media (max-width:520px){.who{left:14px;right:14px;bottom:14px;max-width:none}}
+/* script-version oben rechts */
+.ver{position:fixed;top:0;right:0;z-index:6;margin:clamp(22px,4.4vh,46px) clamp(18px,3vw,34px) 0 0;
+  display:flex;align-items:center;gap:7px;
+  padding:7px 12px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.025);
+  font:500 10px/1 "Inter","Segoe UI",system-ui,sans-serif;
+  letter-spacing:.18em;text-transform:uppercase;color:#7e7e90;pointer-events:none}
+.ver i{width:4px;height:4px;border-radius:50%;background:#7fd9a0;box-shadow:0 0 8px rgba(127,217,160,.6)}
 @media (prefers-reduced-motion:reduce){
   .glow,.dust,.sheen{animation:none}
   .brand-row,.brand h1{transition:none}
@@ -393,10 +401,13 @@ const JS = `
 })();
 `;
 
+const SCRIPT_VERSION = '1.2';
+
 const BG = '<div class="glow a"></div><div class="glow b"></div><div class="glow c"></div>' +
   '<div class="dust"></div><div class="grain2"></div><div class="sheen"></div>' +
   '<header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div>' +
-  '<div class="sub">fight in a school</div></header>';
+  '<div class="sub">fight in a school</div></header>' +
+  '<div class="ver"><i></i>v' + SCRIPT_VERSION + '</div>';
 
 function shell(inner, tag) {
   return (
