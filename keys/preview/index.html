@@ -162,7 +162,7 @@ body.mouse-on .cursor-dot{opacity:.85}
 
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   (function loop(){
-    x += (tx-x)*0.16; y += (ty-y)*0.16;
+    x += (tx-x)*0.24; y += (ty-y)*0.24;
     root.style.setProperty('--mx', x.toFixed(2)+'px');
     root.style.setProperty('--my', y.toFixed(2)+'px');
     if(!reduce) requestAnimationFrame(loop);
