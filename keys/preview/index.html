@@ -125,7 +125,6 @@ html,body{min-height:100%}
   <button class="cta block" type="button"><span class="lbl">Get the key</span></button>
   <div class="meta"><span>2h access</span><span>2h cooldown</span><span>1 key per HWID</span></div>
 </div>
-
 <div class="card">
   <h2>Your key</h2>
   <p>Copy it into the script menu. It only works on the HWID you entered.</p>
@@ -133,7 +132,6 @@ html,body{min-height:100%}
   <button class="cta block" type="button"><span class="lbl">Copy key</span></button>
   <div class="meta"><span class="ok">expires in 1h 58m 41s</span><span>2h session</span></div>
 </div>
-
 <div class="card">
   <h2>Cooldown</h2>
   <p>Your last key ran out. This is the normal 2 hour break - nothing is broken.</p>
@@ -232,5 +230,34 @@ html,body{min-height:100%}
     btn.animate([{transform:base+' scale(1)'},{transform:base+' scale(.955)'},{transform:base+' scale(1)'}],
       {duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
   });
+})();
+
+(function(){
+  var ac=null;
+  function pop(){
+    try{
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      if(!ac) ac = new Ctx();
+      if(ac.state === 'suspended') ac.resume();
+      var t0 = ac.currentTime;
+      var o = ac.createOscillator();
+      var g = ac.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(300, t0);
+      o.frequency.exponentialRampToValueAtTime(640, t0 + 0.030);
+      o.frequency.exponentialRampToValueAtTime(170, t0 + 0.105);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.12, t0 + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.135);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t0); o.stop(t0 + 0.16);
+    }catch(e){}
+  }
+  document.addEventListener('pointerdown', function(e){
+    var t = e.target;
+    if(!t || !t.closest) return;
+    if(t.closest('.cta') || t.closest('button')) pop();
+  }, true);
 })();
 </script></body></html>

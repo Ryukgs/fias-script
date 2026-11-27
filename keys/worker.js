@@ -362,6 +362,35 @@ const JS = `
       {duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
   });
 })();
+
+(function(){
+  var ac=null;
+  function pop(){
+    try{
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      if(!ac) ac = new Ctx();
+      if(ac.state === 'suspended') ac.resume();
+      var t0 = ac.currentTime;
+      var o = ac.createOscillator();
+      var g = ac.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(300, t0);
+      o.frequency.exponentialRampToValueAtTime(640, t0 + 0.030);
+      o.frequency.exponentialRampToValueAtTime(170, t0 + 0.105);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.12, t0 + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.135);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t0); o.stop(t0 + 0.16);
+    }catch(e){}
+  }
+  document.addEventListener('pointerdown', function(e){
+    var t = e.target;
+    if(!t || !t.closest) return;
+    if(t.closest('.cta') || t.closest('button')) pop();
+  }, true);
+})();
 `;
 
 const BG = '<div class="glow a"></div><div class="glow b"></div><div class="glow c"></div>' +
