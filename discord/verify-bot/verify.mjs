@@ -182,7 +182,14 @@ client.on(Events.GuildMemberAdd, async (member) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isButton() || interaction.customId !== 'verify_accept') return;
+  // jede interaction einmal loggen - so sieht man sofort, ob der klick ankommt
+  console.log(`interaction: type=${interaction.type} id=${interaction.customId ?? '-'} user=${interaction.user?.tag ?? '?'}`);
+  if (!interaction.isButton() || interaction.customId !== 'verify_accept') {
+    if (interaction.isButton() && !interaction.deferred && !interaction.replied) {
+      console.log(`  -> fremder button (${interaction.customId}), nicht unser panel`);
+    }
+    return;
+  }
 
   try {
     const guild = interaction.guild;
