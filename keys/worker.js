@@ -587,16 +587,17 @@ async function finishDiscordAuth(request, env, url) {
   const token = await tokenFromCookie(env, request);
   if (!token) return redirectTo('/key?skip=1');
   const back = '/key?t=' + encodeURIComponent(token);
-  if (!code || !oauthReady(env)) return redirectTo(back);
+  const fail = back + '&skip=1';
+  if (!code || !oauthReady(env)) return redirectTo(fail);
 
   const dot = state.lastIndexOf('.');
   if (dot > 0) {
     const st = state.slice(0, dot);
     const sig = state.slice(dot + 1);
     const want = (await hmac(env.KEY_SECRET, 'st:' + token + ':' + st)).slice(0, 24);
-    if (sig !== want || Math.abs(Date.now() - Number(st)) > 10 * 60 * 1000) return redirectTo(back);
+    if (sig !== want || Math.abs(Date.now() - Number(st)) > 10 * 60 * 1000) return redirectTo(fail);
   } else {
-    return redirectTo(back);
+    return redirectTo(fail);
   }
 
   const body = new URLSearchParams({
@@ -611,14 +612,14 @@ async function finishDiscordAuth(request, env, url) {
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body,
   }).catch(() => null);
-  if (!res || !res.ok) return redirectTo(back);
+  if (!res || !res.ok) return redirectTo(fail);
   const tok = await res.json().catch(() => null);
-  if (!tok || !tok.access_token) return redirectTo(back);
+  if (!tok || !tok.access_token) return redirectTo(fail);
 
   const me = await fetch(DISCORD_ME_URL, { headers: { authorization: 'Bearer ' + tok.access_token } }).catch(() => null);
-  if (!me || !me.ok) return redirectTo(back);
+  if (!me || !me.ok) return redirectTo(fail);
   const u = await me.json().catch(() => null);
-  if (!u || !u.id) return redirectTo(back);
+  if (!u || !u.id) return redirectTo(fail);
 
   await saveProfile(env, u);
   const headers = new Headers({ location: back, 'cache-control': 'no-store' });
