@@ -89,7 +89,48 @@ body::after{
   letter-spacing:.52em;text-indent:.52em;text-transform:uppercase;
   color:#6d6d7c;
 }
+/* ---------------- mauslicht + tilt ---------------- */
+.cursor-light,.cursor-dot{position:fixed;top:0;left:0;pointer-events:none;z-index:3;border-radius:50%;
+  transform:translate3d(var(--mx,50vw),var(--my,50vh),0) translate(-50%,-50%);will-change:transform}
+.cursor-light{width:360px;height:360px;opacity:0;transition:opacity .5s ease;
+  background:radial-gradient(closest-side,rgba(255,255,255,.10),rgba(255,255,255,.045) 42%,rgba(255,255,255,0) 72%)}
+.cursor-dot{width:9px;height:9px;opacity:0;transition:opacity .5s ease;
+  background:radial-gradient(closest-side,rgba(255,255,255,.95),rgba(255,255,255,.25) 60%,rgba(255,255,255,0) 100%);
+  box-shadow:0 0 14px 3px rgba(255,255,255,.18)}
+body.mouse-on .cursor-light{opacity:1}
+body.mouse-on .cursor-dot{opacity:.85}
+.brand{perspective:900px}
+.brand-row{transform:rotateX(calc(var(--py,0) * -5deg)) rotateY(calc(var(--px,0) * 5deg))
+  translate3d(calc(var(--px,0) * 7px),calc(var(--py,0) * 5px),0);
+  transition:transform .45s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.brand h1{background-size:140% 240%;background-position:calc(50% + var(--px,0) * 26%) calc(50% + var(--py,0) * 34%);
+  transition:background-position .45s cubic-bezier(.2,.8,.2,1)}
 @media (prefers-reduced-motion:reduce){
   .glow,.dust,.grain2,.sheen{animation:none}
   body::after{animation:none}
-}</style></head><body><div class="glow a"></div><div class="glow b"></div><div class="glow c"></div><div class="dust"></div><div class="grain2"></div><div class="sheen"></div><header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div><div class="sub">fight in a school</div></header></body></html>
+}</style></head><body><div class="glow a"></div><div class="glow b"></div><div class="glow c"></div><div class="dust"></div><div class="grain2"></div><div class="sheen"></div><header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div><div class="sub">fight in a school</div></header><div class="cursor-light"></div><div class="cursor-dot"></div><script>
+(function(){
+  var root=document.documentElement, body=document.body;
+  var light=document.querySelector('.cursor-light'), dot=document.querySelector('.cursor-dot');
+  var brandRow=document.querySelector('.brand-row');
+  if(!light||!dot) return;
+  var tx=innerWidth/2, ty=innerHeight*0.35, x=tx, y=ty, started=false;
+  function move(e){
+    tx=e.clientX; ty=e.clientY;
+    if(!started){x=tx; y=ty; started=true; body.classList.add('mouse-on');}
+    if(brandRow){
+      root.style.setProperty('--px', ((e.clientX/innerWidth)-0.5).toFixed(4));
+      root.style.setProperty('--py', ((e.clientY/innerHeight)-0.5).toFixed(4));
+    }
+  }
+  window.addEventListener('pointermove', move, {passive:true});
+  window.addEventListener('pointerleave', function(){ body.classList.remove('mouse-on'); if(brandRow){ root.style.setProperty('--px','0'); root.style.setProperty('--py','0'); } });
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  (function loop(){
+    x += (tx-x)*0.13; y += (ty-y)*0.13;
+    root.style.setProperty('--mx', x.toFixed(2)+'px');
+    root.style.setProperty('--my', y.toFixed(2)+'px');
+    requestAnimationFrame(loop);
+  })();
+})();
+</script></body></html>
