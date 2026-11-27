@@ -119,34 +119,33 @@ body.mouse-on .cursor-dot{opacity:.9}
   font:500 10px/1 "Inter","Segoe UI",system-ui,sans-serif;
   letter-spacing:.18em;text-transform:uppercase;color:#7e7e90;pointer-events:none}
 .ver i{width:4px;height:4px;border-radius:50%;background:#7fd9a0;box-shadow:0 0 8px rgba(127,217,160,.6)}
+/* ---------------- simple 4-schritt liste ---------------- */
+.panel{pointer-events:auto;width:min(430px,92vw);background:rgba(12,12,15,.55);
+  border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:8px 6px;
+  box-shadow:0 30px 90px rgba(0,0,0,.55);animation:cardIn .7s cubic-bezier(.2,.8,.2,1) both}
+.item{display:flex;gap:14px;padding:16px 18px;align-items:flex-start}
+.item + .item{border-top:1px solid rgba(255,255,255,.06)}
+.item .num{flex:0 0 22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.14);
+  display:grid;place-items:center;font:500 11px/1 ui-monospace,monospace;color:#9a9aab;margin-top:1px}
+.item .body{min-width:0;flex:1}
+.item .k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6c6c7d;margin-bottom:6px}
+.item .v{font:13.5px/1.45 ui-monospace,SFMono-Regular,monospace;color:#f2f2f4;word-break:break-all}
+.item .v.dim{color:#55555f}
+.item .v.ok{color:#7fd9a0}
+.item .v.big{font-size:19px;letter-spacing:.02em}
+.item input{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.10);
+  border-radius:10px;color:#f2f2f4;padding:11px 13px;font:13px ui-monospace,monospace;outline:none;
+  transition:border-color .3s ease,box-shadow .3s ease}
+.item input:focus{border-color:rgba(255,255,255,.34);box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+.item .hov{margin-top:10px}
+.item .hov .cta{width:100%;padding:12px 18px;font-size:11px}
 @media (prefers-reduced-motion:reduce){
   .glow,.dust,.sheen{animation:none}
   .brand-row,.brand h1{transition:none}
 }
 html,body{min-height:100%}
 .stage{position:relative;inset:auto;display:flex;gap:26px;flex-wrap:wrap;justify-content:center;align-items:flex-start;padding:150px 20px 60px;z-index:6}
-</style></head><body><div class="glow a"></div><div class="glow b"></div><div class="glow c"></div><div class="dust"></div><div class="grain2"></div><div class="sheen"></div><header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div><div class="sub">fight in a school</div></header><div class="ver"><i></i>v1.2</div><div class="stage">
-<div class="card">
-  <h2>Get your free key</h2>
-  <p>Paste the HWID your script shows on start. The key is tied to it - it will not work anywhere else.</p>
-  <div class="field"><label for="h1">HWID</label><input id="h1" placeholder="A1B2-C3D4-E5F6"></div>
-  <button class="cta block" type="button"><span class="lbl">Get the key</span></button>
-  <div class="meta"><span>2h access</span><span>2h cooldown</span><span>1 key per HWID</span></div>
-</div>
-<div class="card">
-  <h2>Your key</h2>
-  <p>Copy it into the script menu. It only works on the HWID you entered.</p>
-  <div class="keybox">RYUK-F4E2-91AC-7B33-D0C8</div>
-  <button class="cta block" type="button"><span class="lbl">Copy key</span></button>
-  <div class="meta"><span class="ok">expires in 1h 58m 41s</span><span>2h session</span></div>
-</div>
-<div class="card">
-  <h2>Cooldown</h2>
-  <p>Your last key ran out. This is the normal 2 hour break - nothing is broken.</p>
-  <div class="big">1h 47m 12s</div>
-  <p style="margin:0">This page reloads itself when the cooldown is over.</p>
-</div>
-</div><div class="who"><img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%231a1a22'/%3E%3Ccircle cx='40' cy='30' r='13' fill='%235a5a6b'/%3E%3Crect x='16' y='48' width='48' height='30' rx='15' fill='%235a5a6b'/%3E%3C/svg%3E" alt=""><div class="txt"><b>ryuk</b><span>@ryuk.gs<i class="dotsep"></i>3y on Discord</span></div></div><div class="cursor-dot"></div><script>
+</style></head><body><div class="glow a"></div><div class="glow b"></div><div class="glow c"></div><div class="dust"></div><div class="grain2"></div><div class="sheen"></div><header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div><div class="sub">fight in a school</div></header><div class="ver"><i></i>v1.2</div><div class="stage"><div class="panel"><div class="item"><span class="num">1</span><div class="body"><div class="k">Get key</div><input placeholder="your HWID"><div class="hov"><button class="cta" type="button"><span class="lbl">Get the key</span></button></div></div></div><div class="item"><span class="num">2</span><div class="body"><div class="k">Your key</div><div class="v dim">-</div></div></div><div class="item"><span class="num">3</span><div class="body"><div class="k">Time until it expires</div><div class="v dim">-</div></div></div><div class="item"><span class="num">4</span><div class="body"><div class="k">Time until you can get a free key again</div><div class="v dim">2h after your key ends</div></div></div></div><div class="panel"><div class="item"><span class="num">1</span><div class="body"><div class="k">Get key</div><div class="v ok">done</div></div></div><div class="item"><span class="num">2</span><div class="body"><div class="k">Your key</div><div class="v">RYUK-F4E2-91AC-7B33-D0C8</div></div></div><div class="item"><span class="num">3</span><div class="body"><div class="k">Time until it expires</div><div class="v big ok">1h 58m 41s</div></div></div><div class="item"><span class="num">4</span><div class="body"><div class="k">Time until you can get a free key again</div><div class="v big">3h 58m 41s</div></div></div></div><div class="panel"><div class="item"><span class="num">1</span><div class="body"><div class="k">Get key</div><div class="v ok">locked until the cooldown ends</div></div></div><div class="item"><span class="num">2</span><div class="body"><div class="k">Your key</div><div class="v dim">expired</div></div></div><div class="item"><span class="num">3</span><div class="body"><div class="k">Time until it expires</div><div class="v">expired</div></div></div><div class="item"><span class="num">4</span><div class="body"><div class="k">Time until you can get a free key again</div><div class="v big">1h 47m 12s</div></div></div></div></div><div class="who"><img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%231a1a22'/%3E%3Ccircle cx='40' cy='30' r='13' fill='%235a5a6b'/%3E%3Crect x='16' y='48' width='48' height='30' rx='15' fill='%235a5a6b'/%3E%3C/svg%3E" alt=""><div class="txt"><b>ryuk</b><span>@ryuk.gs<i class="dotsep"></i>3y on Discord</span></div></div><div class="cursor-dot"></div><script>
 (function(){
   var root=document.documentElement, body=document.body;
   var dot=document.querySelector('.cursor-dot');

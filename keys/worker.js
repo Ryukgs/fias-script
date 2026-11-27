@@ -271,6 +271,26 @@ body.mouse-on .cursor-dot{opacity:.9}
   font:500 10px/1 "Inter","Segoe UI",system-ui,sans-serif;
   letter-spacing:.18em;text-transform:uppercase;color:#7e7e90;pointer-events:none}
 .ver i{width:4px;height:4px;border-radius:50%;background:#7fd9a0;box-shadow:0 0 8px rgba(127,217,160,.6)}
+/* ---------------- simple 4-schritt liste ---------------- */
+.panel{pointer-events:auto;width:min(430px,92vw);background:rgba(12,12,15,.55);
+  border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:8px 6px;
+  box-shadow:0 30px 90px rgba(0,0,0,.55);animation:cardIn .7s cubic-bezier(.2,.8,.2,1) both}
+.item{display:flex;gap:14px;padding:16px 18px;align-items:flex-start}
+.item + .item{border-top:1px solid rgba(255,255,255,.06)}
+.item .num{flex:0 0 22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.14);
+  display:grid;place-items:center;font:500 11px/1 ui-monospace,monospace;color:#9a9aab;margin-top:1px}
+.item .body{min-width:0;flex:1}
+.item .k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6c6c7d;margin-bottom:6px}
+.item .v{font:13.5px/1.45 ui-monospace,SFMono-Regular,monospace;color:#f2f2f4;word-break:break-all}
+.item .v.dim{color:#55555f}
+.item .v.ok{color:#7fd9a0}
+.item .v.big{font-size:19px;letter-spacing:.02em}
+.item input{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.10);
+  border-radius:10px;color:#f2f2f4;padding:11px 13px;font:13px ui-monospace,monospace;outline:none;
+  transition:border-color .3s ease,box-shadow .3s ease}
+.item input:focus{border-color:rgba(255,255,255,.34);box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+.item .hov{margin-top:10px}
+.item .hov .cta{width:100%;padding:12px 18px;font-size:11px}
 @media (prefers-reduced-motion:reduce){
   .glow,.dust,.sheen{animation:none}
   .brand-row,.brand h1{transition:none}
@@ -426,245 +446,97 @@ function notice(title, text) {
   );
 }
 
-function formPage(token, ts, sig, profile) {
-  return shell(
-    '<div class="card">' +
-      '<h2>Get your free key</h2>' +
-      '<p>Paste the HWID your script shows on start. The key is tied to it - it will not work anywhere else.</p>' +
-      '<form method="POST" action="/key?t=' + encodeURIComponent(token) + '">' +
-      '<input type="hidden" name="ts" value="' + ts + '">' +
-      '<input type="hidden" name="sig" value="' + sig + '">' +
-      '<div class="field"><label for="hwid">HWID</label>' +
-      '<input id="hwid" name="hwid" placeholder="A1B2-C3D4-E5F6" required autocomplete="off" spellcheck="false"></div>' +
-      '<button class="cta block" type="submit"><span class="lbl">Get the key</span></button>' +
-      '</form>' +
-      '<div class="meta"><span>2h access</span><span>2h cooldown</span><span>1 key per HWID</span></div>' +
-      '</div>' + whoWidget(profile),
-    'free key',
+function tickScript() {
+  return (
+    '<script>(function(){' +
+    'function fmt(s){s=Math.max(0,s|0);var h=(s/3600)|0,m=((s%3600)/60)|0,x=s%60;' +
+    'return (h>0?h+"h ":"")+m+"m "+x+"s"}' +
+    'var els=document.querySelectorAll("[data-sec]");' +
+    'if(!els.length) return;' +
+    'var left=[];els.forEach(function(e){left.push(parseInt(e.getAttribute("data-sec"),10)||0)});' +
+    'setInterval(function(){' +
+    'for(var i=0;i<els.length;i++){if(left[i]>0){left[i]--;els[i].textContent=fmt(left[i]);}' +
+    'else if(els[i].getAttribute("data-done")==="reload"){location.reload();return;}' +
+    'else {els[i].textContent="0m 0s";}' +
+    '}},1000);' +
+    '})();</script>'
   );
+}
+
+function item(num, label, inner) {
+  return (
+    '<div class="item"><span class="num">' + num + '</span>' +
+    '<div class="body"><div class="k">' + label + '</div>' + inner + '</div></div>'
+  );
+}
+
+function simplePage(opts, profile) {
+  const o = opts || {};
+  const keyRow = o.key
+    ? '<div class="v">' + escapeHtml(o.key) + '</div>'
+    : o.expired
+      ? '<div class="v dim">expired</div>'
+      : '<div class="v dim">-</div>';
+
+  const expireRow =
+    o.expiresSec != null && o.expiresSec > 0
+      ? '<div class="v big ok" data-sec="' + o.expiresSec + '">' + fmt(o.expiresSec * 1000) + '</div>'
+      : '<div class="v ' + (o.expired ? '' : 'dim') + '">' + (o.expired ? 'expired' : '-') + '</div>';
+
+  const nextRow =
+    o.nextSec != null && o.nextSec > 0
+      ? '<div class="v big" data-sec="' + o.nextSec + '" data-done="reload">' + fmt(o.nextSec * 1000) + '</div>'
+      : '<div class="v dim">' + (o.nextText || '2h after your key ends') + '</div>';
+
+  const getRow =
+    o.form
+      ? '<form method="POST" action="/key?t=' + encodeURIComponent(o.token) + '">' +
+        '<input type="hidden" name="ts" value="' + o.ts + '">' +
+        '<input type="hidden" name="sig" value="' + o.sig + '">' +
+        '<input name="hwid" placeholder="your HWID" required autocomplete="off" spellcheck="false">' +
+        '<div class="hov"><button class="cta" type="submit"><span class="lbl">Get the key</span></button></div>' +
+        '</form>'
+      : '<div class="v ok">' + (o.getText || 'done') + '</div>';
+
+  return shell(
+    '<div class="panel">' +
+      item('1', 'Get key', getRow) +
+      item('2', 'Your key', keyRow) +
+      item('3', 'Time until it expires', expireRow) +
+      item('4', 'Time until you can get a free key again', nextRow) +
+      '</div>' +
+      whoWidget(profile) +
+      tickScript(),
+  );
+}
+
+function formPage(token, ts, sig, profile) {
+  return simplePage({ form: true, token, ts, sig }, profile);
 }
 
 function resultPage(res, profile) {
-  if (res.status === 429) {
-    const secs = Math.max(0, Math.floor(res.body.cooldownLeft || 0));
-    return shell(
-      whoWidget(profile) + '<div class="card"><h2>Cooldown</h2>' +
-        '<p>Your last key ran out. This is the normal 2 hour break - nothing is broken.</p>' +
-        '<div class="big" id="timer">' + fmt(secs * 1000) + '</div>' +
-        '<p style="margin:0">This page reloads itself when the cooldown is over.</p></div>' +
-        '<script>var s=' + secs + ';var t=document.getElementById("timer");' +
-        'setInterval(function(){s--;if(s<=0){location.reload();return}var h=Math.floor(s/3600),m=Math.floor(s%3600/60);' +
-        't.textContent=(h>0?h+"h ":"")+m+"m "+(s%60)+"s"},1000);</script>',
-      'cooldown',
+  if (res && res.status === 429) {
+    return simplePage(
+      {
+        expired: true,
+        key: null,
+        nextSec: Math.max(0, Math.floor(res.body.cooldownLeft || 0)),
+        getText: 'locked until the cooldown ends',
+      },
+      profile,
     );
   }
-  const b = res.body;
-  const left = Math.max(0, Math.floor((b.expiresAt - Date.now()) / 1000));
-  return shell(
-    '<div class="card"><h2>Your key</h2>' +
-      '<p>Copy it into the script menu. It only works on the HWID you entered.</p>' +
-      '<div class="keybox" id="key">' + b.key + '</div>' +
-      '<button class="cta block" type="button" id="copy"><span class="lbl">Copy key</span></button>' +
-      '<div class="meta"><span class="ok" id="timer">expires in ' + fmt(left * 1000) + '</span><span>2h session</span></div>' +
-      '</div>' +
-      '<script>var s=' + left + ';var t=document.getElementById("timer");' +
-      'setInterval(function(){s--;if(s<0)return;var h=Math.floor(s/3600),m=Math.floor(s%3600/60);' +
-      't.textContent="expires in "+(h>0?h+"h ":"")+m+"m "+(s%60)+"s"},1000);' +
-      'var btn=document.getElementById("copy");btn.onclick=function(){' +
-      'try{navigator.clipboard.writeText(document.getElementById("key").textContent.trim())}catch(e){}' +
-      'var l=btn.querySelector(".lbl");l.textContent="Copied";setTimeout(function(){l.textContent="Copy key"},1600)};</script>',
-    'your key',
+  const b = (res && res.body) || {};
+  const now = Date.now();
+  return simplePage(
+    {
+      key: b.key,
+      expiresSec: Math.max(0, Math.floor((b.expiresAt - now) / 1000)),
+      nextSec: Math.max(0, Math.floor((b.cooldownUntil - now) / 1000)),
+      getText: 'done',
+    },
+    profile,
   );
-}
-
-// ================= Discord login (optional) =================
-// aktiv erst wenn DISCORD_CLIENT_ID + DISCORD_CLIENT_SECRET gesetzt sind.
-const DISCORD_AUTH_URL = 'https://discord.com/oauth2/authorize';
-const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
-const DISCORD_ME_URL = 'https://discord.com/api/users/@me';
-
-function oauthReady(env) {
-  return Boolean(env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET);
-}
-
-function readCookie(request, name) {
-  const raw = request.headers.get('cookie') || '';
-  const parts = raw.split(';');
-  for (const p of parts) {
-    const i = p.indexOf('=');
-    if (i < 0) continue;
-    if (p.slice(0, i).trim() === name) return p.slice(i + 1).trim();
-  }
-  return null;
-}
-
-function cookieHeader(name, value, maxAge) {
-  return name + '=' + value + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=' + maxAge;
-}
-
-async function signValue(env, kind, value) {
-  return (await hmac(env.KEY_SECRET, kind + ':' + value)).slice(0, 24);
-}
-
-async function tokenCookie(env, token) {
-  return token + '.' + (await signValue(env, 'rt', token));
-}
-
-async function tokenFromCookie(env, request) {
-  const raw = readCookie(request, 'rt');
-  if (!raw) return null;
-  const i = raw.lastIndexOf('.');
-  if (i < 0) return null;
-  const token = raw.slice(0, i);
-  const sig = raw.slice(i + 1);
-  if (sig !== (await signValue(env, 'rt', token))) return null;
-  if (env.CHECKPOINT_TOKEN && token !== env.CHECKPOINT_TOKEN) return null;
-  return token;
-}
-
-async function userFromCookie(env, request) {
-  const raw = readCookie(request, 'ru');
-  if (!raw) return null;
-  const i = raw.lastIndexOf('.');
-  if (i < 0) return null;
-  const id = raw.slice(0, i);
-  const sig = raw.slice(i + 1);
-  if (!/^\d{5,25}$/.test(id)) return null;
-  if (sig !== (await signValue(env, 'ru', id))) return null;
-  return id;
-}
-
-async function ensureProfileSchema(db) {
-  await db
-    .prepare(
-      'CREATE TABLE IF NOT EXISTS profiles (discord_id TEXT PRIMARY KEY, username TEXT, display_name TEXT, avatar TEXT, created_at INTEGER, updated_at INTEGER)',
-    )
-    .run();
-}
-
-async function loadProfile(env, id) {
-  try {
-    await ensureProfileSchema(env.DB);
-    return await env.DB.prepare('SELECT * FROM profiles WHERE discord_id = ?1').bind(id).first();
-  } catch (e) {
-    return null;
-  }
-}
-
-async function saveProfile(env, u) {
-  try {
-    await ensureProfileSchema(env.DB);
-    const avatar = u.avatar
-      ? 'https://cdn.discordapp.com/avatars/' + u.id + '/' + u.avatar + '.png?size=80'
-      : 'https://cdn.discordapp.com/embed/avatars/' + (Number(u.discriminator || 0) % 5) + '.png';
-    const created = u.id ? Number((BigInt(u.id) >> 22n) + 1420070400000n) : Date.now();
-    await env.DB.prepare(
-      'INSERT INTO profiles (discord_id, username, display_name, avatar, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6) ON CONFLICT(discord_id) DO UPDATE SET username=?2, display_name=?3, avatar=?4, created_at=?5, updated_at=?6',
-    )
-      .bind(u.id, u.username || '', u.global_name || u.username || '', avatar, created, Date.now())
-      .run();
-    return { discord_id: u.id, username: u.username, display_name: u.global_name || u.username, avatar, created_at: created };
-  } catch (e) {
-    return null;
-  }
-}
-
-function whoWidget(profile) {
-  if (!profile) return '';
-  const joined = profile.created_at ? new Date(profile.created_at) : null;
-  const years = joined ? Math.max(0, (Date.now() - joined.getTime()) / (365.25 * 24 * 3600 * 1000)) : null;
-  const age = years === null ? '' : years < 1 ? Math.max(1, Math.round(years * 12)) + 'mo on Discord' : Math.floor(years) + 'y on Discord';
-  return (
-    '<div class="who">' +
-    '<img src="' + (profile.avatar || '') + '" alt="">' +
-    '<div class="txt"><b>' + escapeHtml(profile.display_name || profile.username || 'user') + '</b>' +
-    '<span>@' + escapeHtml(profile.username || 'user') +
-    (age ? '<i class="dotsep"></i>' + age : '') +
-    '</span></div></div>'
-  );
-}
-
-function escapeHtml(v) {
-  return String(v == null ? '' : v)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-async function currentProfile(env, request) {
-  if (!oauthReady(env)) return null;
-  const id = await userFromCookie(env, request);
-  if (!id) return null;
-  return await loadProfile(env, id);
-}
-
-function redirectTo(path) {
-  return new Response(null, { status: 302, headers: { location: path, 'cache-control': 'no-store' } });
-}
-
-async function startDiscordAuth(request, env, url) {
-  const token = url.searchParams.get('t') || '';
-  if (!oauthReady(env) || !env.CHECKPOINT_TOKEN || token !== env.CHECKPOINT_TOKEN) {
-    return html(shell(notice('Discord login', 'Login is not available right now. Get your key from the key page in Discord.'), 'locked'), 403);
-  }
-  const state = String(Date.now());
-  const sig = (await hmac(env.KEY_SECRET, 'st:' + token + ':' + state)).slice(0, 24);
-  const u = new URL(DISCORD_AUTH_URL);
-  u.searchParams.set('client_id', env.DISCORD_CLIENT_ID);
-  u.searchParams.set('response_type', 'code');
-  u.searchParams.set('scope', 'identify');
-  u.searchParams.set('redirect_uri', url.origin + '/auth/discord/callback');
-  u.searchParams.set('state', state + '.' + sig);
-  const headers = new Headers({ location: u.toString(), 'cache-control': 'no-store' });
-  headers.append('set-cookie', cookieHeader('rt', await tokenCookie(env, token), 900));
-  return new Response(null, { status: 302, headers });
-}
-
-async function finishDiscordAuth(request, env, url) {
-  const code = url.searchParams.get('code') || '';
-  const state = url.searchParams.get('state') || '';
-  const token = await tokenFromCookie(env, request);
-  if (!token) return redirectTo('/key?skip=1');
-  const back = '/key?t=' + encodeURIComponent(token);
-  const fail = back + '&skip=1';
-  if (!code || !oauthReady(env)) return redirectTo(fail);
-
-  const dot = state.lastIndexOf('.');
-  if (dot > 0) {
-    const st = state.slice(0, dot);
-    const sig = state.slice(dot + 1);
-    const want = (await hmac(env.KEY_SECRET, 'st:' + token + ':' + st)).slice(0, 24);
-    if (sig !== want || Math.abs(Date.now() - Number(st)) > 10 * 60 * 1000) return redirectTo(fail);
-  } else {
-    return redirectTo(fail);
-  }
-
-  const body = new URLSearchParams({
-    client_id: env.DISCORD_CLIENT_ID,
-    client_secret: env.DISCORD_CLIENT_SECRET,
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: url.origin + '/auth/discord/callback',
-  });
-  const res = await fetch(DISCORD_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body,
-  }).catch(() => null);
-  if (!res || !res.ok) return redirectTo(fail);
-  const tok = await res.json().catch(() => null);
-  if (!tok || !tok.access_token) return redirectTo(fail);
-
-  const me = await fetch(DISCORD_ME_URL, { headers: { authorization: 'Bearer ' + tok.access_token } }).catch(() => null);
-  if (!me || !me.ok) return redirectTo(fail);
-  const u = await me.json().catch(() => null);
-  if (!u || !u.id) return redirectTo(fail);
-
-  await saveProfile(env, u);
-  const headers = new Headers({ location: back, 'cache-control': 'no-store' });
-  headers.append('set-cookie', cookieHeader('ru', u.id + '.' + (await signValue(env, 'ru', u.id)), 30 * 24 * 3600));
-  return new Response(null, { status: 302, headers });
 }
 
 export default {
