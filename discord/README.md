@@ -49,25 +49,11 @@ Discord -> **+** -> **Server erstellen** -> Name (z. B. `ryuk hub`).
 3. **OAuth2 -> URL Generator**: Scope `bot`, Permission `Administrator`.
 4. URL oeffnen, Server waehlen, autorisieren.
 
-## 3. Ausfuehren
+## 3. Server pflegen
 
-```powershell
-Invoke-WebRequest "https://raw.githubusercontent.com/Ryukgs/fias-script/main/discord/setup-standalone.mjs" -OutFile setup.mjs
-$env:DISCORD_TOKEN="DEIN_TOKEN"
-node setup.mjs <server_id> --reset --force
-```
-
-Erst schauen, was passieren wuerde (ohne Token, ohne Server):
-
-```powershell
-node setup.mjs <server_id> --dry
-```
-
-Server-ID: Einstellungen -> Erweitert -> Entwicklermodus an, dann Rechtsklick
-auf den Server -> **Server-ID kopieren**.
-
-`--reset` raeumt alles weg, was frueher von diesem Script angelegt wurde
-(beide alten Layouts). Ohne `--force` bleiben Kanaele mit Nachrichten stehen.
+Es laufen **keine lokalen Bots/Setup-Scripts** mehr aus diesem Repo.
+Kanaele, Panels und Posts werden ueber den Discord-Bot (MCP) gepflegt,
+Rollen/Verify spaeter ueber einen gehosteten Bot.
 
 ## Aufbau
 
