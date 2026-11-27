@@ -5,36 +5,58 @@ body{
   background:#050506;
   color:#f2f2f4;
   font:15px/1.6 "Inter","Segoe UI",system-ui,sans-serif;
-  position:relative;
-  overflow-x:hidden;
-  min-height:100vh;
+  position:relative;overflow-x:hidden;min-height:100vh;
 }
-/* 1. weiches licht oben + vignette an den raendern */
+/* vignette + grundlicht */
 body::before{
   content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   background:
-    radial-gradient(75% 55% at 50% -8%, rgba(255,255,255,.085), rgba(255,255,255,0) 62%),
-    radial-gradient(45% 40% at 88% 108%, rgba(255,255,255,.05), rgba(255,255,255,0) 60%),
-    radial-gradient(38% 34% at 8% 92%, rgba(255,255,255,.035), rgba(255,255,255,0) 60%),
-    radial-gradient(120% 100% at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,.55) 78%, rgba(0,0,0,.85) 100%);
+    radial-gradient(120% 100% at 50% 50%, rgba(0,0,0,0) 28%, rgba(0,0,0,.55) 76%, rgba(0,0,0,.88) 100%);
 }
-/* 2. sehr feines korn (luxus-papier look) */
+/* korn */
 body::after{
-  content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+  content:"";position:fixed;inset:-20px;z-index:4;pointer-events:none;
   opacity:.05;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
   background-size:160px 160px;
+  animation:grainShift 7s steps(6) infinite;
 }
-/* 3. haarlinien-raster + langsamer licht-sweep */
-.grain2,.sheen{position:fixed;inset:0;pointer-events:none}
-.grain2{
-  z-index:2;opacity:.022;
+@keyframes grainShift{
+  0%{transform:translate3d(0,0,0)}20%{transform:translate3d(-6px,4px,0)}40%{transform:translate3d(4px,-6px,0)}
+  60%{transform:translate3d(-3px,-4px,0)}80%{transform:translate3d(6px,3px,0)}100%{transform:translate3d(0,0,0)}
+}
+/* bewegte lichter */
+.glow{position:fixed;z-index:0;pointer-events:none;border-radius:50%;mix-blend-mode:screen;will-change:transform}
+.glow.a{width:78vmax;height:56vmax;top:-26vmax;left:50%;margin-left:-39vmax;
+  background:radial-gradient(closest-side,rgba(255,255,255,.11),rgba(255,255,255,.03) 55%,rgba(255,255,255,0) 72%);
+  animation:driftA 34s ease-in-out infinite alternate}
+.glow.b{width:58vmax;height:48vmax;right:-20vmax;bottom:-20vmax;
+  background:radial-gradient(closest-side,rgba(255,255,255,.075),rgba(255,255,255,0) 70%);
+  animation:driftB 47s ease-in-out infinite alternate}
+.glow.c{width:46vmax;height:40vmax;left:-16vmax;bottom:-16vmax;
+  background:radial-gradient(closest-side,rgba(255,255,255,.055),rgba(255,255,255,0) 70%);
+  animation:driftC 58s ease-in-out infinite alternate}
+@keyframes driftA{from{transform:translate3d(-2%,-1%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.1)}}
+@keyframes driftB{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-5%,-4%,0) scale(1.12)}}
+@keyframes driftC{from{transform:translate3d(0,0,0) scale(1.05)}to{transform:translate3d(4%,-3%,0) scale(1)}}
+/* staub / funken */
+.dust{position:fixed;inset:-15%;z-index:1;pointer-events:none;opacity:.55;
+  background-image:radial-gradient(1.2px 1.2px at 12% 22%,rgba(255,255,255,.5),transparent 60%),radial-gradient(1px 1px at 72% 14%,rgba(255,255,255,.35),transparent 60%),radial-gradient(1.4px 1.4px at 38% 68%,rgba(255,255,255,.42),transparent 60%),radial-gradient(1px 1px at 84% 52%,rgba(255,255,255,.3),transparent 60%),radial-gradient(1.1px 1.1px at 58% 88%,rgba(255,255,255,.38),transparent 60%),radial-gradient(1px 1px at 24% 46%,rgba(255,255,255,.26),transparent 60%);
+  background-size:520px 520px;
+  animation:dustDrift 110s linear infinite, dustFade 19s ease-in-out infinite alternate}
+@keyframes dustDrift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-110px,70px,0)}}
+@keyframes dustFade{from{opacity:.32}to{opacity:.62}}
+/* haarlinien */
+.grain2{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.02;
   background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.9) 0 1px,transparent 1px 4px);
-}
-.sheen{
-  z-index:0;opacity:.16;
-  background:conic-gradient(from 210deg at 50% 50%,rgba(255,255,255,0) 0deg,rgba(255,255,255,.06) 60deg,rgba(255,255,255,0) 130deg,rgba(255,255,255,0) 360deg);
-  animation:sweep 44s linear infinite;
-}
+  animation:linesPan 60s linear infinite}
+@keyframes linesPan{to{background-position:0 400px}}
+/* langsamer licht-sweep */
+.sheen{position:fixed;inset:-30%;z-index:0;pointer-events:none;opacity:.18;
+  background:conic-gradient(from 210deg at 50% 50%,rgba(255,255,255,0) 0deg,rgba(255,255,255,.07) 55deg,rgba(255,255,255,0) 125deg,rgba(255,255,255,0) 360deg);
+  animation:sweep 52s linear infinite}
 @keyframes sweep{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.sheen{animation:none}}</style></head><body><div class="grain2"></div><div class="sheen"></div></body></html>
+@media (prefers-reduced-motion:reduce){
+  .glow,.dust,.grain2,.sheen{animation:none}
+  body::after{animation:none}
+}</style></head><body><div class="glow a"></div><div class="glow b"></div><div class="glow c"></div><div class="dust"></div><div class="grain2"></div><div class="sheen"></div></body></html>
