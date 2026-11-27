@@ -153,32 +153,13 @@ function fmt(ms) {
 
 const STYLE = `*{box-sizing:border-box}
 html,body{margin:0;min-height:100vh}
-body{
-  background:#050506;
-  color:#f2f2f4;
-  font:15px/1.6 "Inter","Segoe UI",system-ui,sans-serif;
-  position:relative;overflow-x:hidden;min-height:100vh;
-}
-/* vignette + grundlicht */
-body::before{
-  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(120% 100% at 50% 50%, rgba(0,0,0,0) 28%, rgba(0,0,0,.55) 76%, rgba(0,0,0,.88) 100%);
-}
-/* korn */
-body::after{
-  content:"";position:fixed;inset:-20px;z-index:4;pointer-events:none;
-  opacity:.05;mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-  background-size:160px 160px;
-  animation:grainShift 7s steps(6) infinite;
-}
-@keyframes grainShift{
-  0%{transform:translate3d(0,0,0)}20%{transform:translate3d(-6px,4px,0)}40%{transform:translate3d(4px,-6px,0)}
-  60%{transform:translate3d(-3px,-4px,0)}80%{transform:translate3d(6px,3px,0)}100%{transform:translate3d(0,0,0)}
-}
-/* bewegte lichter */
-.glow{position:fixed;z-index:0;pointer-events:none;border-radius:50%;mix-blend-mode:screen;will-change:transform}
+body{background:#050506;color:#f2f2f4;font:15px/1.6 "Inter","Segoe UI",system-ui,sans-serif;
+  position:relative;overflow-x:hidden;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(120% 100% at 50% 50%,rgba(0,0,0,0) 28%,rgba(0,0,0,.55) 76%,rgba(0,0,0,.88) 100%)}
+body::after{content:"";position:fixed;inset:-20px;z-index:4;pointer-events:none;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");background-size:160px 160px}
+.glow{position:fixed;z-index:0;pointer-events:none;border-radius:50%;will-change:transform}
 .glow.a{width:78vmax;height:56vmax;top:-26vmax;left:50%;margin-left:-39vmax;
   background:radial-gradient(closest-side,rgba(255,255,255,.11),rgba(255,255,255,.03) 55%,rgba(255,255,255,0) 72%);
   animation:driftA 34s ease-in-out infinite alternate}
@@ -191,140 +172,82 @@ body::after{
 @keyframes driftA{from{transform:translate3d(-2%,-1%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.1)}}
 @keyframes driftB{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-5%,-4%,0) scale(1.12)}}
 @keyframes driftC{from{transform:translate3d(0,0,0) scale(1.05)}to{transform:translate3d(4%,-3%,0) scale(1)}}
-/* staub / funken */
-.dust{position:fixed;inset:-15%;z-index:1;pointer-events:none;opacity:.55;
-  background-image:radial-gradient(1.2px 1.2px at 12% 22%,rgba(255,255,255,.5),transparent 60%),radial-gradient(1px 1px at 72% 14%,rgba(255,255,255,.35),transparent 60%),radial-gradient(1.4px 1.4px at 38% 68%,rgba(255,255,255,.42),transparent 60%),radial-gradient(1px 1px at 84% 52%,rgba(255,255,255,.3),transparent 60%),radial-gradient(1.1px 1.1px at 58% 88%,rgba(255,255,255,.38),transparent 60%),radial-gradient(1px 1px at 24% 46%,rgba(255,255,255,.26),transparent 60%);
-  background-size:520px 520px;
-  animation:dustDrift 110s linear infinite, dustFade 19s ease-in-out infinite alternate}
+.dust{position:fixed;inset:-15%;z-index:1;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(1.2px 1.2px at 12% 22%,rgba(255,255,255,.5),transparent 60%),radial-gradient(1px 1px at 72% 14%,rgba(255,255,255,.35),transparent 60%),radial-gradient(1.4px 1.4px at 38% 68%,rgba(255,255,255,.42),transparent 60%),radial-gradient(1px 1px at 84% 52%,rgba(255,255,255,.3),transparent 60%),radial-gradient(1.1px 1.1px at 58% 88%,rgba(255,255,255,.38),transparent 60%),radial-gradient(1px 1px at 24% 46%,rgba(255,255,255,.26),transparent 60%);background-size:520px 520px;
+  animation:dustDrift 110s linear infinite}
 @keyframes dustDrift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-110px,70px,0)}}
-@keyframes dustFade{from{opacity:.32}to{opacity:.62}}
-/* haarlinien */
 .grain2{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.02;
-  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.9) 0 1px,transparent 1px 4px);
-  animation:linesPan 60s linear infinite}
-@keyframes linesPan{to{background-position:0 400px}}
-/* langsamer licht-sweep */
-.sheen{position:fixed;inset:-30%;z-index:0;pointer-events:none;opacity:.18;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.9) 0 1px,transparent 1px 4px)}
+.sheen{position:fixed;inset:-30%;z-index:0;pointer-events:none;opacity:.16;will-change:transform;
   background:conic-gradient(from 210deg at 50% 50%,rgba(255,255,255,0) 0deg,rgba(255,255,255,.07) 55deg,rgba(255,255,255,0) 125deg,rgba(255,255,255,0) 360deg);
-  animation:sweep 52s linear infinite}
+  animation:sweep 72s linear infinite}
 @keyframes sweep{to{transform:rotate(360deg)}}
-/* ---------------- kopf / brand ---------------- */
-.brand{
-  position:fixed;top:0;left:0;right:0;z-index:5;
-  display:flex;flex-direction:column;align-items:center;
-  padding:clamp(26px,5vh,52px) 20px 0;
-  pointer-events:none;
-}
-.brand-row{display:flex;align-items:center;gap:clamp(14px,2.2vw,26px)}
-.rule{
-  height:1px;width:clamp(34px,7vw,96px);
-  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.45));
-}
-.rule.r{background:linear-gradient(270deg,rgba(255,255,255,0),rgba(255,255,255,.45))}
-.brand h1{
-  margin:0;
-  font-family:"Didot","Bodoni MT","Times New Roman",Georgia,serif;
-  font-weight:400;
-  font-size:clamp(19px,2.5vw,30px);
-  line-height:1;
-  letter-spacing:.34em;
-  text-indent:.34em;
-  text-transform:uppercase;
-  background:linear-gradient(180deg,#ffffff 0%,#e6e6ec 42%,#9a9aa8 100%);
-  -webkit-background-clip:text;background-clip:text;
-  color:transparent;
-  white-space:nowrap;
-}
-.brand .sub{
-  margin-top:clamp(10px,1.6vh,16px);
-  font-size:clamp(8px,.9vw,10px);
-  letter-spacing:.52em;text-indent:.52em;text-transform:uppercase;
-  color:#6d6d7c;
-}
-/* ---------------- mauslicht + tilt ---------------- */
-.cursor-light,.cursor-dot{position:fixed;top:0;left:0;pointer-events:none;z-index:3;border-radius:50%;
-  transform:translate3d(var(--mx,50vw),var(--my,50vh),0) translate(-50%,-50%);will-change:transform}
-.cursor-light{width:360px;height:360px;opacity:0;transition:opacity .5s ease;
-  background:radial-gradient(closest-side,rgba(255,255,255,.10),rgba(255,255,255,.045) 42%,rgba(255,255,255,0) 72%)}
-.cursor-dot{width:9px;height:9px;opacity:0;transition:opacity .5s ease;
-  background:radial-gradient(closest-side,rgba(255,255,255,.95),rgba(255,255,255,.25) 60%,rgba(255,255,255,0) 100%);
-  box-shadow:0 0 14px 3px rgba(255,255,255,.18)}
-body.mouse-on .cursor-light{opacity:1}
-body.mouse-on .cursor-dot{opacity:.85}
-.brand{perspective:900px}
-.brand-row{transform:rotateX(calc(var(--py,0) * -5deg)) rotateY(calc(var(--px,0) * 5deg))
-  translate3d(calc(var(--px,0) * 7px),calc(var(--py,0) * 5px),0);
+.brand{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;flex-direction:column;align-items:center;
+  padding:clamp(26px,5vh,52px) 20px 0;pointer-events:none;perspective:900px}
+.brand-row{display:flex;align-items:center;gap:clamp(14px,2.2vw,26px);
+  transform:rotateX(calc(var(--py,0) * -5deg)) rotateY(calc(var(--px,0) * 5deg))
+    translate3d(calc(var(--px,0) * 7px),calc(var(--py,0) * 5px),0);
   transition:transform .45s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
-.brand h1{background-size:140% 240%;background-position:calc(50% + var(--px,0) * 26%) calc(50% + var(--py,0) * 34%);
+.rule{height:1px;width:clamp(34px,7vw,96px);
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.45))}
+.rule.r{background:linear-gradient(270deg,rgba(255,255,255,0),rgba(255,255,255,.45))}
+.brand h1{margin:0;font-family:"Didot","Bodoni MT","Times New Roman",Georgia,serif;font-weight:400;
+  font-size:clamp(19px,2.5vw,30px);line-height:1;letter-spacing:.34em;text-indent:.34em;text-transform:uppercase;
+  background:linear-gradient(180deg,#ffffff 0%,#e6e6ec 42%,#9a9aa8 100%);
+  background-size:140% 240%;
+  background-position:calc(50% + var(--px,0) * 26%) calc(50% + var(--py,0) * 34%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;
   transition:background-position .45s cubic-bezier(.2,.8,.2,1)}
-/* klick-impuls */
-.click-burst{position:fixed;width:16px;height:16px;border-radius:50%;pointer-events:none;z-index:4;
-  border:1px solid rgba(255,255,255,.55);transform:translate(-50%,-50%);
-  animation:burst .75s cubic-bezier(.15,.6,.3,1) forwards}
-@keyframes burst{from{opacity:.85;transform:translate(-50%,-50%) scale(1)}to{opacity:0;transform:translate(-50%,-50%) scale(9)}}
+.brand .sub{margin-top:clamp(10px,1.6vh,16px);font-size:clamp(8px,.9vw,10px);
+  letter-spacing:.52em;text-indent:.52em;text-transform:uppercase;color:#6d6d7c}
+.cursor-dot{position:fixed;top:0;left:0;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:9;
+  background:#fff;box-shadow:0 0 12px 2px rgba(255,255,255,.35);opacity:0;transition:opacity .25s ease;
+  transform:translate3d(-100px,-100px,0);will-change:transform}
+body.mouse-on .cursor-dot{opacity:.9}
 @media (prefers-reduced-motion:reduce){
-  .glow,.dust,.grain2,.sheen{animation:none}
-  body::after{animation:none}
+  .glow,.dust,.sheen{animation:none}
+  .brand-row,.brand h1{transition:none}
 }`;
 
 // nur hintergrund - inhalt kommt spaeter
 const JS = `
 (function(){
   var root=document.documentElement, body=document.body;
-  var light=document.querySelector('.cursor-light');
   var dot=document.querySelector('.cursor-dot');
   var brandRow=document.querySelector('.brand-row');
-  if(!light||!dot) return;
+  if(!dot) return;
 
-  var tx=window.innerWidth/2, ty=window.innerHeight*0.4;
-  var x=tx, y=ty, seen=false;
+  var R=3.5, shown=false;
 
-  function show(v){
-    if(v && !seen){ seen=true; x=tx; y=ty; }
-    body.classList[v?'add':'remove']('mouse-on');
+  function place(cx, cy){
+    dot.style.transform='translate3d('+(cx-R).toFixed(2)+'px,'+(cy-R).toFixed(2)+'px,0)';
+    if(!shown){ shown=true; body.classList.add('mouse-on'); }
   }
 
-  function track(cx, cy){
-    tx=cx; ty=cy;
-    show(true);
-    if(brandRow){
-      root.style.setProperty('--px', ((cx/window.innerWidth)-0.5).toFixed(4));
-      root.style.setProperty('--py', ((cy/window.innerHeight)-0.5).toFixed(4));
-    }
+  var tiltQueued=false, lastX=0, lastY=0;
+  function tilt(){
+    tiltQueued=false;
+    if(!brandRow) return;
+    root.style.setProperty('--px', ((lastX/window.innerWidth)-0.5).toFixed(4));
+    root.style.setProperty('--py', ((lastY/window.innerHeight)-0.5).toFixed(4));
   }
 
-  function onMove(e){
-    if(e.touches && e.touches[0]) track(e.touches[0].clientX, e.touches[0].clientY);
-    else if(typeof e.clientX==='number') track(e.clientX, e.clientY);
+  function onRaw(e){
+    if(typeof e.clientX!=='number') return;
+    place(e.clientX, e.clientY);
+    lastX=e.clientX; lastY=e.clientY;
+    if(!tiltQueued){ tiltQueued=true; requestAnimationFrame(tilt); }
   }
 
-  // mehrere wege, damit es auf jedem geraet/browser sicher ankommt
-  document.addEventListener('pointermove', onMove, {passive:true});
-  document.addEventListener('mousemove', onMove, {passive:true});
-  document.addEventListener('touchmove', onMove, {passive:true});
-  document.addEventListener('touchstart', onMove, {passive:true});
-  document.addEventListener('pointerdown', function(e){
-    onMove(e);
-    var b=document.createElement('div');
-    b.className='click-burst';
-    b.style.left=e.clientX+'px'; b.style.top=e.clientY+'px';
-    document.body.appendChild(b);
-    setTimeout(function(){ b.remove(); }, 800);
-  }, {passive:true});
+  // pointerrawupdate liefert die rohen eingaben (bis 240Hz bei gaming-maeusen)
+  document.addEventListener('pointerrawupdate', onRaw, {passive:true});
+  document.addEventListener('pointermove', onRaw, {passive:true});
+  document.addEventListener('mousemove', onRaw, {passive:true});
+  document.addEventListener('touchmove', function(e){ if(e.touches[0]) onRaw(e.touches[0]); }, {passive:true});
+  document.addEventListener('touchstart', function(e){ if(e.touches[0]) onRaw(e.touches[0]); }, {passive:true});
+  document.addEventListener('mouseleave', function(){ body.classList.remove('mouse-on'); shown=false; });
 
-  document.addEventListener('mouseleave', function(){ show(false); });
-  window.addEventListener('blur', function(){ show(false); });
-
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  (function loop(){
-    x += (tx-x)*0.24; y += (ty-y)*0.24;
-    root.style.setProperty('--mx', x.toFixed(2)+'px');
-    root.style.setProperty('--my', y.toFixed(2)+'px');
-    if(!reduce) requestAnimationFrame(loop);
-  })();
-
-  // auf touch-geraeten ohne maus: licht mittig, dezent sichtbar
-  if(!reduce && !('ontouchstart' in window)) body.classList.add('mouse-on');
+  if(!('ontouchstart' in window)) body.classList.add('mouse-on');
 })();
 `;
 
@@ -337,7 +260,7 @@ function shell() {
   return (
     '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub</title><style>' +
     STYLE +
-    '</style></head><body>' + BG + '<div class="cursor-light"></div><div class="cursor-dot"></div><script>' + JS + '</script></body></html>'
+    '</style></head><body>' + BG + '<div class="cursor-dot"></div><script>' + JS + '</script></body></html>'
   );
 }
 
