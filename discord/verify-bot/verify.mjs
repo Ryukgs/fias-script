@@ -138,13 +138,13 @@ function panelPayload() {
       '**4.** Staff decisions are final. Appeals belong in a ticket.',
       '**5.** Breaking a rule = mute, kick or ban without refund.',
       '',
-      'Click **Accept the rules** below to unlock the server.',
+      'Click **Verify** below to unlock the server.',
       `Your account must be at least **${MIN_ACCOUNT_AGE_DAYS} days** old.`,
     ].join('\n'),
     color: 0xffffff,
   };
   const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('verify_accept').setLabel('Accept the rules').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('verify_accept').setLabel('Verify').setStyle(ButtonStyle.Success),
   );
   return { embeds: [embed], components: [row] };
 }
