@@ -289,6 +289,7 @@ body.mouse-on .cursor-dot{opacity:1}
   border-radius:10px;color:#f2f2f4;padding:11px 13px;font:13px ui-monospace,monospace;outline:none;
   transition:border-color .3s ease,box-shadow .3s ease}
 .item input:focus{border-color:rgba(255,255,255,.34);box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+.item .hint{margin-top:8px;font-size:10.5px;line-height:1.5;color:#5f5f70}
 .item .hov{margin-top:10px}
 .item .hov .cta{width:100%;padding:12px 18px;font-size:11px}
 @media (prefers-reduced-motion:reduce){
@@ -494,6 +495,7 @@ function simplePage(opts, profile) {
         '<input type="hidden" name="ts" value="' + o.ts + '">' +
         '<input type="hidden" name="sig" value="' + o.sig + '">' +
         '<input name="hwid" placeholder="your HWID" required autocomplete="off" spellcheck="false">' +
+        '<div class="hint">open the script - the key window shows your HWID (copy it from the box that says "HWID (copy this)")</div>' +
         '<div class="hov"><button class="cta" type="submit"><span class="lbl">Get the key</span></button></div>' +
         '</form>'
       : '<div class="v ok">' + (o.getText || 'done') + '</div>';
