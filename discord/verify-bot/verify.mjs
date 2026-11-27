@@ -238,3 +238,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 process.on('unhandledRejection', (err) => console.error(`unhandledRejection: ${err?.message || err}`));
 process.on('uncaughtException', (err) => console.error(`uncaughtException: ${err?.message || err}`));
+
+// ---- login (muss am ende stehen, sonst beendet sich der prozess sofort) ----
+console.log('verbinde mit discord...');
+client.login(TOKEN).catch((err) => {
+  console.error(`login fehlgeschlagen: ${err?.message || err}`);
+  console.error(`code=${err?.code || '-'} status=${err?.status || '-'}`);
+  process.exit(1);
+});
