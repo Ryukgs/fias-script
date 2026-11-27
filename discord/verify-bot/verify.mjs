@@ -130,16 +130,15 @@ function panelPayload() {
   const embed = {
     title: 'Verification',
     description: [
-      '**Server rules** — read them in <#RULES>.',
+      'Last step. Click **Verify** below and the whole server unlocks:',
       '',
-      '**1.** Be respectful. No insults, racism, spam or advertising.',
-      '**2.** No leaking, reselling or sharing keys or the script.',
-      '**3.** No scam attempts, no fake vouches, no alt-account abuse.',
-      '**4.** Staff decisions are final. Appeals belong in a ticket.',
-      '**5.** Breaking a rule = mute, kick or ban without refund.',
+      '💬  chat + uploads',
+      '💡  suggestions, reviews, feedback',
+      '🔑  free key channel',
+      '🔊  voice calls',
       '',
-      'Click **Verify** below to unlock the server.',
       `Your account must be at least **${MIN_ACCOUNT_AGE_DAYS} days** old.`,
+      'Wrong button or something broken? Ping a staff member.',
     ].join('\n'),
     color: 0xffffff,
   };
