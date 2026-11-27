@@ -775,9 +775,12 @@ export default {
       return json({ error: 'use the key page' }, 403);
     }
 
-    if (url.pathname === '/key') {
-      const token = url.searchParams.get('t') || '';
-      if (!env.CHECKPOINT_TOKEN || token !== env.CHECKPOINT_TOKEN) {
+    // / , /free und /key sind die key-seite (work.ink kann direkt auf die domain zeigen)
+    if (url.pathname === '/' || url.pathname === '/free' || url.pathname === '/key') {
+      const fromUrl = url.searchParams.get('t') || '';
+      const token = fromUrl || env.CHECKPOINT_TOKEN || '';
+      const open = fromUrl ? fromUrl === env.CHECKPOINT_TOKEN : !!env.CHECKPOINT_TOKEN;
+      if (!open) {
         return html(shell(notice('Locked', 'This page only opens after the checkpoint. Start again from the key page in Discord.'), 'locked'), 403);
       }
 
