@@ -26,6 +26,7 @@ const {
   VERIFY_ROLE = 'Verified',
   LOG_CHANNEL = 'logs',
   WELCOME_CHANNEL = 'welcome',
+  GOODBYE_CHANNEL = 'goodbye',
   MIN_ACCOUNT_AGE_DAYS = '7',
 } = process.env;
 
@@ -88,6 +89,17 @@ function findChannel(guild, ref) {
     guild.channels.cache.get(clean) ??
     guild.channels.cache.find((c) => c.name.toLowerCase() === clean) ??
     guild.channels.cache.find((c) => c.name.toLowerCase().includes(clean)) ??
+    null
+  );
+}
+
+// #goodbye: eigener Kanal fuer Leaves
+const GOODBYE_CHANNEL_ID = process.env.GOODBYE_CHANNEL_ID || '1575673077768126464';
+function findGoodbye(guild) {
+  return (
+    guild.channels.cache.get(GOODBYE_CHANNEL_ID) ??
+    findChannel(guild, GOODBYE_CHANNEL) ??
+    guild.channels.cache.find((c) => c.name.toLowerCase().includes('goodbye')) ??
     null
   );
 }
@@ -171,6 +183,7 @@ client.once(Events.ClientReady, async (c) => {
     await guild.channels.fetch();
     await ensurePanel(guild);
     console.log(`welcome-kanal: ${findWelcome(guild)?.name ?? 'NICHT GEFUNDEN'}`);
+    console.log(`goodbye-kanal: ${findGoodbye(guild)?.name ?? 'NICHT GEFUNDEN'}`);
     console.log('bereit');
   } catch (err) {
     console.error(`setup fehlgeschlagen: ${err.message}`);
@@ -220,9 +233,9 @@ client.on(Events.GuildMemberAdd, async (member) => {
 client.on(Events.GuildMemberRemove, async (member) => {
   console.log(`leave: ${member.user.tag}`);
   try {
-    const channel = findWelcome(member.guild);
+    const channel = findGoodbye(member.guild);
     if (!channel?.isTextBased()) {
-      console.error(`welcome-kanal nicht gefunden (WELCOME_CHANNEL=${WELCOME_CHANNEL})`);
+      console.error(`goodbye-kanal nicht gefunden (GOODBYE_CHANNEL=${GOODBYE_CHANNEL})`);
       return;
     }
 
