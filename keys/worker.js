@@ -151,97 +151,23 @@ function fmt(ms) {
   return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
 }
 
-const STYLE = `*{box-sizing:border-box}
-body{background:radial-gradient(1200px 620px at 50% -10%,#1b1b26 0%,#0b0b0f 55%);color:#e8e8ee;font:14px/1.6 "Segoe UI",system-ui,sans-serif;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.card{width:470px;max-width:100%;background:#13131a;border:1px solid #23232e;border-radius:16px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.5)}
-.brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-.brand b{font-size:12px;letter-spacing:.22em;text-transform:uppercase}
-.pill{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#0b0b0f;background:#e8e8ee;border-radius:999px;padding:5px 10px;font-weight:700}
-h1{font-size:20px;margin:0 0 6px}
-p{color:#9a9aab;margin:0 0 16px;font-size:13px}
-.steps{list-style:none;padding:0;margin:0 0 20px;display:grid;gap:10px}
-.steps li{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#b9b9c9}
-.steps i{flex:0 0 20px;height:20px;border-radius:50%;background:#1f1f2a;border:1px solid #2c2c3a;display:grid;place-items:center;font-size:11px;font-style:normal}
-label{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6f6f80;margin-bottom:6px}
-input{width:100%;background:#0b0b0f;border:1px solid #23232e;border-radius:10px;color:#e8e8ee;padding:13px 14px;font:13px ui-monospace,monospace;outline:none}
-input:focus{border-color:#4a4a5c}
-button{width:100%;background:#e8e8ee;color:#0b0b0f;border:0;border-radius:10px;padding:13px;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:.15s}
-button:hover{background:#fff}
-.key{font:20px/1.4 ui-monospace,monospace;letter-spacing:.1em;text-align:center;background:#0b0b0f;border:1px dashed #2f2f3c;border-radius:12px;padding:18px 14px;margin:16px 0 12px;user-select:all;word-break:break-all}
-.meta{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#6f6f80;margin-top:16px;border-top:1px solid #1e1e28;padding-top:14px}
-.warn{color:#ff8a8a}.ok{color:#8ee08e}
-.dim{color:#6f6f80;font-size:12px}
-.big{font:700 26px/1.2 ui-monospace,monospace;margin:10px 0 2px}
-footer{margin-top:18px;font-size:11px;color:#4f4f60;text-align:center;letter-spacing:.06em}`;
+const STYLE = `*{box-sizing:border-box}body{background:#0b0b0f;color:#e8e8ee;font:14px/1.6 "Segoe UI",system-ui,sans-serif;margin:0;min-height:100vh}`;
 
-function shell(inner, badge) {
+// seite ist absichtlich leer - wird neu aufgebaut
+function shell() {
   return (
-    '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub — free key</title><style>' +
+    '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub</title><style>' +
     STYLE +
-    '</style></head><body><div class="card"><div class="brand"><b>ryuk hub</b><span class="pill">' +
-    (badge || 'FREE KEY') +
-    '</span></div>' +
-    inner +
-    '<footer>fight in a school · free key</footer></div></body></html>'
+    '</style></head><body></body></html>'
   );
 }
 
-function formPage(token, ts, sig) {
-  return shell(
-    '<h1>Get your free key</h1>' +
-      '<p>Finish the checkpoint, then paste the HWID the script shows on start.</p>' +
-      '<ul class="steps">' +
-      '<li><i>1</i><span>Open the script in your executor and copy the <b>HWID</b> it prints.</span></li>' +
-      '<li><i>2</i><span>Paste it below and press <b>Get key</b>.</span></li>' +
-      '<li><i>3</i><span>Paste the key into the script. It works for <b>2 hours</b>, then <b>2 hours cooldown</b>.</span></li>' +
-      '</ul>' +
-      '<form method="POST" action="/key?t=' + encodeURIComponent(token) + '">' +
-      '<input type="hidden" name="ts" value="' + ts + '">' +
-      '<input type="hidden" name="sig" value="' + sig + '">' +
-      '<label for="hwid">Your HWID</label>' +
-      '<input id="hwid" name="hwid" placeholder="e.g. A1B2-C3D4-E5F6" required autocomplete="off" spellcheck="false">' +
-      '<button type="submit">Get key</button>' +
-      '</form>' +
-      '<div class="meta"><span>One key per HWID</span><span>Same key every time</span></div>',
-  );
+function formPage() {
+  return shell();
 }
 
-function resultPage(res) {
-  if (res.status === 429) {
-    const secs = Math.max(0, Math.floor(res.body.cooldownLeft || 0));
-    return shell(
-      '<h1>Cooldown active</h1>' +
-        '<p>Your last key ran out. Nothing is broken — this is the normal 2 hour break.</p>' +
-        '<div class="big" id="timer">' +
-        fmt(secs * 1000) +
-        '</div>' +
-        '<p class="dim">Page refreshes itself when the cooldown ends.</p>' +
-        '<script>var s=' +
-        secs +
-        ';var t=document.getElementById("timer");setInterval(function(){s--;if(s<=0){location.reload();return}var h=Math.floor(s/3600),m=Math.floor(s%3600/60);t.textContent=(h>0?h+"h ":"")+m+"m "+(s%60)+"s"},1000);</script>',
-      'COOLDOWN',
-    );
-  }
-  const b = res.body;
-  const left = Math.max(0, Math.floor((b.expiresAt - Date.now()) / 1000));
-  return shell(
-    '<h1>Your key is ready</h1>' +
-      '<p>Copy it and paste it into the script. It is bound to your HWID.</p>' +
-      '<div class="key" id="key">' +
-      b.key +
-      '</div>' +
-      '<button type="button" id="copy">Copy key</button>' +
-      '<div class="meta"><span class="ok" id="timer">expires in ' +
-      fmt(left * 1000) +
-      '</span><span>' +
-      fmt(7200 * 1000) +
-      ' session</span></div>' +
-      '<p class="dim" style="margin-top:14px">After the 2 hours you wait 2 hours, then come back to this page.</p>' +
-      '<script>var s=' +
-      left +
-      ';var t=document.getElementById("timer");setInterval(function(){s--;if(s<0)return;var h=Math.floor(s/3600),m=Math.floor(s%3600/60);t.textContent="expires in "+(h>0?h+"h ":"")+m+"m "+(s%60)+"s"},1000);' +
-      'document.getElementById("copy").onclick=function(){var k=document.getElementById("key").textContent.trim();navigator.clipboard.writeText(k);this.textContent="Copied";var b=this;setTimeout(function(){b.textContent="Copy key"},1500)};</script>',
-  );
+function resultPage() {
+  return shell();
 }
 
 export default {
