@@ -226,6 +226,28 @@ body.mouse-on .cursor-dot{opacity:.9}
 .cta::after{content:"";position:absolute;inset:1px;border-radius:inherit;
   border:1px solid rgba(255,255,255,.05);pointer-events:none}
 .cta .lbl{position:relative;z-index:1}
+/* ---------------- card / formular ---------------- */
+.stage{position:fixed;inset:0;z-index:6;display:grid;place-items:center;pointer-events:none;padding:120px 20px 40px}
+.card{pointer-events:auto;width:min(420px,92vw);background:rgba(12,12,15,.55);
+  border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:30px 28px 26px;
+  box-shadow:0 30px 90px rgba(0,0,0,.55);animation:cardIn .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.card h2{margin:0 0 8px;font:400 20px/1.3 "Didot","Bodoni MT","Times New Roman",Georgia,serif;letter-spacing:.01em}
+.card p{margin:0 0 22px;color:#8b8b9b;font-size:13px;line-height:1.65}
+.field label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#6c6c7d;margin-bottom:9px}
+.field input{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.10);
+  border-radius:12px;color:#f2f2f4;padding:14px 15px;font:13px ui-monospace,SFMono-Regular,monospace;
+  outline:none;transition:border-color .3s ease,box-shadow .3s ease}
+.field input::placeholder{color:#4d4d5c}
+.field input:focus{border-color:rgba(255,255,255,.34);box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+.cta.block{display:block;width:100%;margin-top:14px;padding:16px 20px}
+.keybox{font:15px/1.6 ui-monospace,SFMono-Regular,monospace;letter-spacing:.07em;text-align:center;
+  background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.18);border-radius:13px;
+  padding:18px 14px;word-break:break-all;user-select:all;margin-bottom:14px}
+.meta{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;color:#66667a;
+  margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)}
+.ok{color:#7fd9a0}.warn{color:#f08a8a}
+.big{font:600 26px/1.3 ui-monospace,SFMono-Regular,monospace;margin:4px 0 10px}
 @media (prefers-reduced-motion:reduce){
   .glow,.dust,.sheen{animation:none}
   .brand-row,.brand h1{transition:none}
@@ -294,6 +316,7 @@ const JS = `
 (function(){
   var btn=document.querySelector('.cta');
   if(!btn) return;
+  var isBlock = btn.classList.contains('block');
   var tx=0, ty=0, cx=0, cy=0, active=false;
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -305,7 +328,7 @@ const JS = `
   }
 
   function magnet(e){
-    if(reduce) return;
+    if(reduce || isBlock) return;
     var r=btn.getBoundingClientRect();
     var dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
     var dist=Math.sqrt(dx*dx+dy*dy);
@@ -318,7 +341,6 @@ const JS = `
   document.addEventListener('mousemove', magnet, {passive:true});
 
   btn.addEventListener('click', function(ev){
-    ev.preventDefault();
     if(reduce) return;
     var base=btn.style.transform||'translate3d(0,0,0)';
     btn.animate([{transform:base+' scale(1)'},{transform:base+' scale(.955)'},{transform:base+' scale(1)'}],
@@ -330,23 +352,74 @@ const JS = `
 const BG = '<div class="glow a"></div><div class="glow b"></div><div class="glow c"></div>' +
   '<div class="dust"></div><div class="grain2"></div><div class="sheen"></div>' +
   '<header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div>' +
-  '<div class="sub">fight in a school</div></header>' +
-  '<div class="stage"><button class="cta" type="button" aria-label="Get the key"><span class="lbl">Get the key</span></button></div>';
+  '<div class="sub">fight in a school</div></header>';
 
-function shell() {
+function shell(inner, tag) {
   return (
-    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub</title><style>' +
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub — free key</title><style>' +
     STYLE +
-    '</style></head><body>' + BG + '<div class="cursor-dot"></div><script>' + JS + '</script></body></html>'
+    '</style></head><body>' + BG +
+    '<div class="stage">' + (inner || '') + '</div>' +
+    '<div class="cursor-dot"></div><script>' + JS + '</script></body></html>'
   );
 }
 
-function formPage() {
-  return shell();
+function notice(title, text) {
+  return (
+    '<div class="card"><h2>' + title + '</h2><p>' + text + '</p>' +
+    '<a class="cta block" href="/" style="text-decoration:none;text-align:center"><span class="lbl">Reload</span></a></div>'
+  );
 }
 
-function resultPage() {
-  return shell();
+function formPage(token, ts, sig) {
+  return shell(
+    '<div class="card">' +
+      '<h2>Get your free key</h2>' +
+      '<p>Paste the HWID your script shows on start. The key is tied to it - it will not work anywhere else.</p>' +
+      '<form method="POST" action="/key?t=' + encodeURIComponent(token) + '">' +
+      '<input type="hidden" name="ts" value="' + ts + '">' +
+      '<input type="hidden" name="sig" value="' + sig + '">' +
+      '<div class="field"><label for="hwid">HWID</label>' +
+      '<input id="hwid" name="hwid" placeholder="A1B2-C3D4-E5F6" required autocomplete="off" spellcheck="false"></div>' +
+      '<button class="cta block" type="submit"><span class="lbl">Get the key</span></button>' +
+      '</form>' +
+      '<div class="meta"><span>2h access</span><span>2h cooldown</span><span>1 key per HWID</span></div>' +
+      '</div>',
+    'free key',
+  );
+}
+
+function resultPage(res) {
+  if (res.status === 429) {
+    const secs = Math.max(0, Math.floor(res.body.cooldownLeft || 0));
+    return shell(
+      '<div class="card"><h2>Cooldown</h2>' +
+        '<p>Your last key ran out. This is the normal 2 hour break - nothing is broken.</p>' +
+        '<div class="big" id="timer">' + fmt(secs * 1000) + '</div>' +
+        '<p style="margin:0">This page reloads itself when the cooldown is over.</p></div>' +
+        '<script>var s=' + secs + ';var t=document.getElementById("timer");' +
+        'setInterval(function(){s--;if(s<=0){location.reload();return}var h=Math.floor(s/3600),m=Math.floor(s%3600/60);' +
+        't.textContent=(h>0?h+"h ":"")+m+"m "+(s%60)+"s"},1000);</script>',
+      'cooldown',
+    );
+  }
+  const b = res.body;
+  const left = Math.max(0, Math.floor((b.expiresAt - Date.now()) / 1000));
+  return shell(
+    '<div class="card"><h2>Your key</h2>' +
+      '<p>Copy it into the script menu. It only works on the HWID you entered.</p>' +
+      '<div class="keybox" id="key">' + b.key + '</div>' +
+      '<button class="cta block" type="button" id="copy"><span class="lbl">Copy key</span></button>' +
+      '<div class="meta"><span class="ok" id="timer">expires in ' + fmt(left * 1000) + '</span><span>2h session</span></div>' +
+      '</div>' +
+      '<script>var s=' + left + ';var t=document.getElementById("timer");' +
+      'setInterval(function(){s--;if(s<0)return;var h=Math.floor(s/3600),m=Math.floor(s%3600/60);' +
+      't.textContent="expires in "+(h>0?h+"h ":"")+m+"m "+(s%60)+"s"},1000);' +
+      'var btn=document.getElementById("copy");btn.onclick=function(){' +
+      'try{navigator.clipboard.writeText(document.getElementById("key").textContent.trim())}catch(e){}' +
+      'var l=btn.querySelector(".lbl");l.textContent="Copied";setTimeout(function(){l.textContent="Copy key"},1600)};</script>',
+    'your key',
+  );
 }
 
 export default {
@@ -374,7 +447,7 @@ export default {
     if (url.pathname === '/key') {
       const token = url.searchParams.get('t') || '';
       if (!env.CHECKPOINT_TOKEN || token !== env.CHECKPOINT_TOKEN) {
-        return html(shell('<h1>Locked</h1><p class="warn">This page only opens after the checkpoint.</p>'), 403);
+        return html(shell(notice('Locked', 'This page only opens after the checkpoint. Start again from the key page in Discord.'), 'locked'), 403);
       }
 
       if (request.method === 'GET') {
@@ -388,7 +461,7 @@ export default {
         const ts = String(form.get('ts') || '');
         const sig = String(form.get('sig') || '');
         if (!(await pageSigValid(env, token, ts, sig))) {
-          return html(shell('<h1>Expired</h1><p class="warn">This page got too old. Reload it and try again.</p>'), 403);
+          return html(shell(notice('Expired', 'This page got too old. Reload it and try again.'), 'expired'), 403);
         }
         const hwid = String(form.get('hwid') || '').trim();
         if (!hwid || hwid.length < 6) {
@@ -396,13 +469,13 @@ export default {
           return html(formPage(token, nts, await pageSig(env, token, nts)), 400);
         }
         if (!rateOk(ip)) {
-          return html(shell('<h1>Slow down</h1><p class="warn">Too many key requests from your connection. Try again in an hour.</p>'), 429);
+          return html(shell(notice('Slow down', 'Too many key requests from your connection. Try again in an hour.'), 'locked'), 429);
         }
         const res = await claim(env, hwid, null);
         return html(resultPage(res), res.status);
       }
     }
 
-    return html(shell('<h1>ryuk hub</h1><p class="dim">Key service is running.</p>'));
+    return html(shell(notice('ryuk hub', 'Key service is running. Open the key page from Discord to get your key.'), 'online'));
   },
 };

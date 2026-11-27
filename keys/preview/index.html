@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub</title><style>*{box-sizing:border-box}
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ryuk hub — key page preview</title><style>*{box-sizing:border-box}
 html,body{margin:0;min-height:100vh}
 body{background:#050506;color:#f2f2f4;font:15px/1.6 "Inter","Segoe UI",system-ui,sans-serif;
   position:relative;overflow-x:hidden;min-height:100vh}
@@ -74,10 +74,58 @@ body.mouse-on .cursor-dot{opacity:.9}
 .cta::after{content:"";position:absolute;inset:1px;border-radius:inherit;
   border:1px solid rgba(255,255,255,.05);pointer-events:none}
 .cta .lbl{position:relative;z-index:1}
+/* ---------------- card / formular ---------------- */
+.stage{position:fixed;inset:0;z-index:6;display:grid;place-items:center;pointer-events:none;padding:120px 20px 40px}
+.card{pointer-events:auto;width:min(420px,92vw);background:rgba(12,12,15,.55);
+  border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:30px 28px 26px;
+  box-shadow:0 30px 90px rgba(0,0,0,.55);animation:cardIn .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.card h2{margin:0 0 8px;font:400 20px/1.3 "Didot","Bodoni MT","Times New Roman",Georgia,serif;letter-spacing:.01em}
+.card p{margin:0 0 22px;color:#8b8b9b;font-size:13px;line-height:1.65}
+.field label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#6c6c7d;margin-bottom:9px}
+.field input{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.10);
+  border-radius:12px;color:#f2f2f4;padding:14px 15px;font:13px ui-monospace,SFMono-Regular,monospace;
+  outline:none;transition:border-color .3s ease,box-shadow .3s ease}
+.field input::placeholder{color:#4d4d5c}
+.field input:focus{border-color:rgba(255,255,255,.34);box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+.cta.block{display:block;width:100%;margin-top:14px;padding:16px 20px}
+.keybox{font:15px/1.6 ui-monospace,SFMono-Regular,monospace;letter-spacing:.07em;text-align:center;
+  background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.18);border-radius:13px;
+  padding:18px 14px;word-break:break-all;user-select:all;margin-bottom:14px}
+.meta{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;color:#66667a;
+  margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)}
+.ok{color:#7fd9a0}.warn{color:#f08a8a}
+.big{font:600 26px/1.3 ui-monospace,SFMono-Regular,monospace;margin:4px 0 10px}
 @media (prefers-reduced-motion:reduce){
   .glow,.dust,.sheen{animation:none}
   .brand-row,.brand h1{transition:none}
-}</style></head><body><div class="glow a"></div><div class="glow b"></div><div class="glow c"></div><div class="dust"></div><div class="grain2"></div><div class="sheen"></div><header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div><div class="sub">fight in a school</div></header><div class="stage"><button class="cta" type="button" aria-label="Get the key"><span class="lbl">Get the key</span></button></div><div class="cursor-dot"></div><script>
+}
+html,body{min-height:100%}
+.stage{position:relative;inset:auto;display:flex;gap:26px;flex-wrap:wrap;justify-content:center;align-items:flex-start;padding:150px 20px 60px;z-index:6}
+</style></head><body><div class="glow a"></div><div class="glow b"></div><div class="glow c"></div><div class="dust"></div><div class="grain2"></div><div class="sheen"></div><header class="brand"><div class="brand-row"><span class="rule"></span><h1>Ryuk Hub</h1><span class="rule r"></span></div><div class="sub">fight in a school</div></header><div class="stage">
+<div class="card">
+  <h2>Get your free key</h2>
+  <p>Paste the HWID your script shows on start. The key is tied to it - it will not work anywhere else.</p>
+  <div class="field"><label for="h1">HWID</label><input id="h1" placeholder="A1B2-C3D4-E5F6"></div>
+  <button class="cta block" type="button"><span class="lbl">Get the key</span></button>
+  <div class="meta"><span>2h access</span><span>2h cooldown</span><span>1 key per HWID</span></div>
+</div>
+
+<div class="card">
+  <h2>Your key</h2>
+  <p>Copy it into the script menu. It only works on the HWID you entered.</p>
+  <div class="keybox">RYUK-F4E2-91AC-7B33-D0C8</div>
+  <button class="cta block" type="button"><span class="lbl">Copy key</span></button>
+  <div class="meta"><span class="ok">expires in 1h 58m 41s</span><span>2h session</span></div>
+</div>
+
+<div class="card">
+  <h2>Cooldown</h2>
+  <p>Your last key ran out. This is the normal 2 hour break - nothing is broken.</p>
+  <div class="big">1h 47m 12s</div>
+  <p style="margin:0">This page reloads itself when the cooldown is over.</p>
+</div>
+</div><div class="cursor-dot"></div><script>
 (function(){
   var root=document.documentElement, body=document.body;
   var dot=document.querySelector('.cursor-dot');
@@ -139,6 +187,7 @@ body.mouse-on .cursor-dot{opacity:.9}
 (function(){
   var btn=document.querySelector('.cta');
   if(!btn) return;
+  var isBlock = btn.classList.contains('block');
   var tx=0, ty=0, cx=0, cy=0, active=false;
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -150,7 +199,7 @@ body.mouse-on .cursor-dot{opacity:.9}
   }
 
   function magnet(e){
-    if(reduce) return;
+    if(reduce || isBlock) return;
     var r=btn.getBoundingClientRect();
     var dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
     var dist=Math.sqrt(dx*dx+dy*dy);
@@ -163,7 +212,6 @@ body.mouse-on .cursor-dot{opacity:.9}
   document.addEventListener('mousemove', magnet, {passive:true});
 
   btn.addEventListener('click', function(ev){
-    ev.preventDefault();
     if(reduce) return;
     var base=btn.style.transform||'translate3d(0,0,0)';
     btn.animate([{transform:base+' scale(1)'},{transform:base+' scale(.955)'},{transform:base+' scale(1)'}],
