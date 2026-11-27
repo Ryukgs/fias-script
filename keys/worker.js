@@ -248,6 +248,21 @@ body.mouse-on .cursor-dot{opacity:.9}
   margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)}
 .ok{color:#7fd9a0}.warn{color:#f08a8a}
 .big{font:600 26px/1.3 ui-monospace,SFMono-Regular,monospace;margin:4px 0 10px}
+/* ---------------- discord profil unten links ---------------- */
+.who{position:fixed;left:22px;bottom:22px;z-index:7;display:flex;align-items:center;gap:12px;
+  padding:11px 16px 11px 11px;border-radius:14px;
+  background:rgba(12,12,15,.62);border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 18px 50px rgba(0,0,0,.5);animation:whoIn .8s cubic-bezier(.2,.8,.2,1) both;
+  backdrop-filter:blur(6px);max-width:min(320px,calc(100vw - 44px))}
+@keyframes whoIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.who img{width:38px;height:38px;border-radius:50%;object-fit:cover;
+  border:1px solid rgba(255,255,255,.14);background:#1a1a22;flex:0 0 38px}
+.who .txt{min-width:0}
+.who b{display:block;font:500 13px/1.25 "Inter","Segoe UI",system-ui,sans-serif;color:#f2f2f4;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who span{display:block;font-size:11px;color:#7f7f92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .dotsep{width:3px;height:3px;border-radius:50%;background:#3f3f4d;margin:0 6px;display:inline-block;vertical-align:middle}
+@media (max-width:520px){.who{left:14px;right:14px;bottom:14px;max-width:none}}
 @media (prefers-reduced-motion:reduce){
   .glow,.dust,.sheen{animation:none}
   .brand-row,.brand h1{transition:none}
@@ -371,7 +386,7 @@ function notice(title, text) {
   );
 }
 
-function formPage(token, ts, sig) {
+function formPage(token, ts, sig, profile) {
   return shell(
     '<div class="card">' +
       '<h2>Get your free key</h2>' +
@@ -384,16 +399,16 @@ function formPage(token, ts, sig) {
       '<button class="cta block" type="submit"><span class="lbl">Get the key</span></button>' +
       '</form>' +
       '<div class="meta"><span>2h access</span><span>2h cooldown</span><span>1 key per HWID</span></div>' +
-      '</div>',
+      '</div>' + whoWidget(profile),
     'free key',
   );
 }
 
-function resultPage(res) {
+function resultPage(res, profile) {
   if (res.status === 429) {
     const secs = Math.max(0, Math.floor(res.body.cooldownLeft || 0));
     return shell(
-      '<div class="card"><h2>Cooldown</h2>' +
+      whoWidget(profile) + '<div class="card"><h2>Cooldown</h2>' +
         '<p>Your last key ran out. This is the normal 2 hour break - nothing is broken.</p>' +
         '<div class="big" id="timer">' + fmt(secs * 1000) + '</div>' +
         '<p style="margin:0">This page reloads itself when the cooldown is over.</p></div>' +
@@ -422,12 +437,204 @@ function resultPage(res) {
   );
 }
 
+// ================= Discord login (optional) =================
+// aktiv erst wenn DISCORD_CLIENT_ID + DISCORD_CLIENT_SECRET gesetzt sind.
+const DISCORD_AUTH_URL = 'https://discord.com/oauth2/authorize';
+const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
+const DISCORD_ME_URL = 'https://discord.com/api/users/@me';
+
+function oauthReady(env) {
+  return Boolean(env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET);
+}
+
+function readCookie(request, name) {
+  const raw = request.headers.get('cookie') || '';
+  const parts = raw.split(';');
+  for (const p of parts) {
+    const i = p.indexOf('=');
+    if (i < 0) continue;
+    if (p.slice(0, i).trim() === name) return p.slice(i + 1).trim();
+  }
+  return null;
+}
+
+function cookieHeader(name, value, maxAge) {
+  return name + '=' + value + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=' + maxAge;
+}
+
+async function signValue(env, kind, value) {
+  return (await hmac(env.KEY_SECRET, kind + ':' + value)).slice(0, 24);
+}
+
+async function tokenCookie(env, token) {
+  return token + '.' + (await signValue(env, 'rt', token));
+}
+
+async function tokenFromCookie(env, request) {
+  const raw = readCookie(request, 'rt');
+  if (!raw) return null;
+  const i = raw.lastIndexOf('.');
+  if (i < 0) return null;
+  const token = raw.slice(0, i);
+  const sig = raw.slice(i + 1);
+  if (sig !== (await signValue(env, 'rt', token))) return null;
+  if (env.CHECKPOINT_TOKEN && token !== env.CHECKPOINT_TOKEN) return null;
+  return token;
+}
+
+async function userFromCookie(env, request) {
+  const raw = readCookie(request, 'ru');
+  if (!raw) return null;
+  const i = raw.lastIndexOf('.');
+  if (i < 0) return null;
+  const id = raw.slice(0, i);
+  const sig = raw.slice(i + 1);
+  if (!/^\d{5,25}$/.test(id)) return null;
+  if (sig !== (await signValue(env, 'ru', id))) return null;
+  return id;
+}
+
+async function ensureProfileSchema(db) {
+  await db
+    .prepare(
+      'CREATE TABLE IF NOT EXISTS profiles (discord_id TEXT PRIMARY KEY, username TEXT, display_name TEXT, avatar TEXT, created_at INTEGER, updated_at INTEGER)',
+    )
+    .run();
+}
+
+async function loadProfile(env, id) {
+  try {
+    await ensureProfileSchema(env.DB);
+    return await env.DB.prepare('SELECT * FROM profiles WHERE discord_id = ?1').bind(id).first();
+  } catch (e) {
+    return null;
+  }
+}
+
+async function saveProfile(env, u) {
+  try {
+    await ensureProfileSchema(env.DB);
+    const avatar = u.avatar
+      ? 'https://cdn.discordapp.com/avatars/' + u.id + '/' + u.avatar + '.png?size=80'
+      : 'https://cdn.discordapp.com/embed/avatars/' + (Number(u.discriminator || 0) % 5) + '.png';
+    const created = u.id ? Number((BigInt(u.id) >> 22n) + 1420070400000n) : Date.now();
+    await env.DB.prepare(
+      'INSERT INTO profiles (discord_id, username, display_name, avatar, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6) ON CONFLICT(discord_id) DO UPDATE SET username=?2, display_name=?3, avatar=?4, created_at=?5, updated_at=?6',
+    )
+      .bind(u.id, u.username || '', u.global_name || u.username || '', avatar, created, Date.now())
+      .run();
+    return { discord_id: u.id, username: u.username, display_name: u.global_name || u.username, avatar, created_at: created };
+  } catch (e) {
+    return null;
+  }
+}
+
+function whoWidget(profile) {
+  if (!profile) return '';
+  const joined = profile.created_at ? new Date(profile.created_at) : null;
+  const years = joined ? Math.max(0, (Date.now() - joined.getTime()) / (365.25 * 24 * 3600 * 1000)) : null;
+  const age = years === null ? '' : years < 1 ? Math.max(1, Math.round(years * 12)) + 'mo on Discord' : Math.floor(years) + 'y on Discord';
+  return (
+    '<div class="who">' +
+    '<img src="' + (profile.avatar || '') + '" alt="">' +
+    '<div class="txt"><b>' + escapeHtml(profile.display_name || profile.username || 'user') + '</b>' +
+    '<span>@' + escapeHtml(profile.username || 'user') +
+    (age ? '<i class="dotsep"></i>' + age : '') +
+    '</span></div></div>'
+  );
+}
+
+function escapeHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function currentProfile(env, request) {
+  if (!oauthReady(env)) return null;
+  const id = await userFromCookie(env, request);
+  if (!id) return null;
+  return await loadProfile(env, id);
+}
+
+function redirectTo(path) {
+  return new Response(null, { status: 302, headers: { location: path, 'cache-control': 'no-store' } });
+}
+
+async function startDiscordAuth(request, env, url) {
+  const token = url.searchParams.get('t') || '';
+  if (!oauthReady(env) || !env.CHECKPOINT_TOKEN || token !== env.CHECKPOINT_TOKEN) {
+    return html(shell(notice('Discord login', 'Login is not available right now. Get your key from the key page in Discord.'), 'locked'), 403);
+  }
+  const state = String(Date.now());
+  const sig = (await hmac(env.KEY_SECRET, 'st:' + token + ':' + state)).slice(0, 24);
+  const u = new URL(DISCORD_AUTH_URL);
+  u.searchParams.set('client_id', env.DISCORD_CLIENT_ID);
+  u.searchParams.set('response_type', 'code');
+  u.searchParams.set('scope', 'identify');
+  u.searchParams.set('redirect_uri', url.origin + '/auth/discord/callback');
+  u.searchParams.set('state', state + '.' + sig);
+  const headers = new Headers({ location: u.toString(), 'cache-control': 'no-store' });
+  headers.append('set-cookie', cookieHeader('rt', await tokenCookie(env, token), 900));
+  return new Response(null, { status: 302, headers });
+}
+
+async function finishDiscordAuth(request, env, url) {
+  const code = url.searchParams.get('code') || '';
+  const state = url.searchParams.get('state') || '';
+  const token = await tokenFromCookie(env, request);
+  if (!token) return redirectTo('/key?skip=1');
+  const back = '/key?t=' + encodeURIComponent(token);
+  if (!code || !oauthReady(env)) return redirectTo(back);
+
+  const dot = state.lastIndexOf('.');
+  if (dot > 0) {
+    const st = state.slice(0, dot);
+    const sig = state.slice(dot + 1);
+    const want = (await hmac(env.KEY_SECRET, 'st:' + token + ':' + st)).slice(0, 24);
+    if (sig !== want || Math.abs(Date.now() - Number(st)) > 10 * 60 * 1000) return redirectTo(back);
+  } else {
+    return redirectTo(back);
+  }
+
+  const body = new URLSearchParams({
+    client_id: env.DISCORD_CLIENT_ID,
+    client_secret: env.DISCORD_CLIENT_SECRET,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: url.origin + '/auth/discord/callback',
+  });
+  const res = await fetch(DISCORD_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body,
+  }).catch(() => null);
+  if (!res || !res.ok) return redirectTo(back);
+  const tok = await res.json().catch(() => null);
+  if (!tok || !tok.access_token) return redirectTo(back);
+
+  const me = await fetch(DISCORD_ME_URL, { headers: { authorization: 'Bearer ' + tok.access_token } }).catch(() => null);
+  if (!me || !me.ok) return redirectTo(back);
+  const u = await me.json().catch(() => null);
+  if (!u || !u.id) return redirectTo(back);
+
+  await saveProfile(env, u);
+  const headers = new Headers({ location: back, 'cache-control': 'no-store' });
+  headers.append('set-cookie', cookieHeader('ru', u.id + '.' + (await signValue(env, 'ru', u.id)), 30 * 24 * 3600));
+  return new Response(null, { status: 302, headers });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
     const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+
+    if (url.pathname === '/auth/discord') return await startDiscordAuth(request, env, url);
+    if (url.pathname === '/auth/discord/callback') return await finishDiscordAuth(request, env, url);
 
     if (url.pathname === '/api/validate') {
       if (request.method !== 'POST') return json({ error: 'post only' }, 405);
@@ -451,9 +658,13 @@ export default {
       }
 
       if (request.method === 'GET') {
+        const profile = await currentProfile(env, request);
+        if (!profile && oauthReady(env) && url.searchParams.get('skip') !== '1') {
+          return await startDiscordAuth(request, env, url);
+        }
         const ts = String(Date.now());
         const sig = await pageSig(env, token, ts);
-        return html(formPage(token, ts, sig));
+        return html(formPage(token, ts, sig, profile));
       }
 
       if (request.method === 'POST') {
@@ -466,13 +677,14 @@ export default {
         const hwid = String(form.get('hwid') || '').trim();
         if (!hwid || hwid.length < 6) {
           const nts = String(Date.now());
-          return html(formPage(token, nts, await pageSig(env, token, nts)), 400);
+          return html(formPage(token, nts, await pageSig(env, token, nts), await currentProfile(env, request)), 400);
         }
         if (!rateOk(ip)) {
           return html(shell(notice('Slow down', 'Too many key requests from your connection. Try again in an hour.'), 'locked'), 429);
         }
+        const profile = await currentProfile(env, request);
         const res = await claim(env, hwid, null);
-        return html(resultPage(res), res.status);
+        return html(resultPage(res, profile), res.status);
       }
     }
 
