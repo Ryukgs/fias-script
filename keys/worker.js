@@ -201,9 +201,9 @@ body::after{content:"";position:fixed;inset:-20px;z-index:4;pointer-events:none;
 .brand .sub{margin-top:clamp(10px,1.6vh,16px);font-size:clamp(8px,.9vw,10px);
   letter-spacing:.52em;text-indent:.52em;text-transform:uppercase;color:#6d6d7c}
 .cursor-dot{position:fixed;top:0;left:0;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:9;
-  background:#fff;box-shadow:0 0 12px 2px rgba(255,255,255,.35);opacity:0;transition:opacity .25s ease;
+  background:rgba(198,198,210,.5);opacity:0;transition:opacity .25s ease;
   transform:translate3d(-100px,-100px,0);will-change:transform}
-body.mouse-on .cursor-dot{opacity:.9}
+body.mouse-on .cursor-dot{opacity:1}
 /* ---------------- button ---------------- */
 .stage{position:fixed;inset:0;z-index:6;display:grid;place-items:center;pointer-events:none}
 .cta{pointer-events:auto;position:relative;overflow:hidden;
